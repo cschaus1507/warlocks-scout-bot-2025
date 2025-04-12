@@ -130,6 +130,24 @@ def team_lookup(user_input):
     return jsonify({'reply': reply})
 
 # --- Helper Functions ---
+def load_team_notes():
+    if not os.path.exists(NOTES_FILE):
+        with open(NOTES_FILE, 'w') as f:
+            json.dump({}, f)
+    with open(NOTES_FILE, 'r') as f:
+        return json.load(f)
+
+def save_team_notes(notes):
+    with open(NOTES_FILE, 'w') as f:
+        json.dump(notes, f, indent=2)
+
+def add_note_to_team(team_number, note):
+    notes = load_team_notes()
+    team_key = str(team_number)
+    if team_key not in notes:
+        notes[team_key] = []
+    notes[team_key].append(note)
+    save_team_notes(notes)
 
 def extract_team_number(text):
     numbers = ''.join(c if c.isdigit() else ' ' for c in text).split()
