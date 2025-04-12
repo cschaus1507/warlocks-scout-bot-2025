@@ -157,12 +157,15 @@ def generate_event_summary(events_info, events_list):
     for event_key, info in events_info.items():
         try:
             event_name = event_key_to_name.get(event_key, 'Unknown Event')
-            playoff_status = info.get('playoff', {}).get('status', 'Unknown Status')
             rank = info.get('qual', {}).get('ranking', {}).get('rank', None)
-            if rank:
-                summaries.append(f"At {event_name}, they ranked #{rank} and {playoff_status.lower()}.")
+            playoff_status = info.get('playoff', {}).get('status', '')
+
+            if playoff_status == "won":
+                summaries.append(f"🏆 WON {event_name}!")
+            elif rank:
+                summaries.append(f"At {event_name}, they ranked #{rank}.")
             else:
-                summaries.append(f"At {event_name}, {playoff_status.lower()}.")
+                summaries.append(f"At {event_name}, they competed.")
         except Exception:
             continue
     return ' '.join(summaries)
