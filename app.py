@@ -204,6 +204,139 @@ def generate_statbotics_opinion(statbotics_info):
         opinion.append("🔥 They are ranked among the top 20 teams in the world!")
 
     return " ".join(opinion)
+# --- Notes and Favorites Management ---
+
+def load_team_notes():
+    if not os.path.exists(NOTES_FILE):
+        with open(NOTES_FILE, 'w') as f:
+            json.dump({}, f)
+    with open(NOTES_FILE, 'r') as f:
+        return json.load(f)
+
+def save_team_notes(notes):
+    with open(NOTES_FILE, 'w') as f:
+        json.dump(notes, f, indent=2)
+
+def add_note_to_team(team_number, note):
+    notes = load_team_notes()
+    team_key = str(team_number)
+    if team_key not in notes:
+        notes[team_key] = []
+    notes[team_key].append(note)
+    save_team_notes(notes)
+
+def load_favorites():
+    if not os.path.exists(FAVORITES_FILE):
+        with open(FAVORITES_FILE, 'w') as f:
+            json.dump([], f)
+    with open(FAVORITES_FILE, 'r') as f:
+        return json.load(f)
+
+def save_favorites(favorites):
+    with open(FAVORITES_FILE, 'w') as f:
+        json.dump(favorites, f, indent=2)
+
+def add_favorite(team_number):
+    favorites = load_favorites()
+    team_key = str(team_number)
+    if team_key not in favorites:
+        favorites.append(team_key)
+    save_favorites(favorites)
+
+def remove_favorite(team_number):
+    favorites = load_favorites()
+    team_key = str(team_number)
+    if team_key in favorites:
+        favorites.remove(team_key)
+    save_favorites(favorites)
+
+def favorite_team(user_input):
+    team_number = extract_team_number(user_input)
+    if team_number:
+        add_favorite(team_number)
+        return jsonify({'reply': f"⭐ Team {team_number} has been added to your favorites!"})
+    else:
+        return jsonify({'reply': "I couldn't find which team to favorite."})
+
+def unfavorite_team(user_input):
+    team_number = extract_team_number(user_input)
+    if team_number:
+        remove_favorite(team_number)
+        return jsonify({'reply': f"🚫 Team {team_number} has been removed from your favorites."})
+    else:
+        return jsonify({'reply': "I couldn't find which team to unfavorite."})
+
+def list_favorites():
+    favorites = load_favorites()
+    if favorites:
+        return jsonify({'reply': f"⭐ Your favorite teams: {', '.join(favorites)}"})
+    else:
+        return jsonify({'reply': "You have no favorite teams yet."})
+
+def list_notes():
+    notes = load_team_notes()
+    if not notes:
+        return jsonify({'reply': "There are no saved notes yet."})
+    team_list = ', '.join(sorted(notes.keys()))
+    return jsonify({'reply': f"Teams with saved notes: {team_list}"})
+
+def add_note(user_input):
+    try:
+        split_parts = user_input.split("note:")
+        team_part = split_parts[0].strip()
+        note_part = split_parts[1].strip()
+
+        team_number = extract_team_number(team_part)
+        if not team_number:
+            return jsonify({'reply': "I couldn't figure out which team you're noting."})
+
+        add_note_to_team(team_number, note_part)
+        return jsonify({'reply': f"Got it! I saved your note for Team {team_number}."})
+    except Exception:
+        return jsonify({'reply': "Something went wrong while saving your note."})
+
+def delete_note(user_input):
+    try:
+        split_parts = user_input.split("delete:")
+        team_part = split_parts[0].strip()
+        note_part = split_parts[1].strip()
+
+        team_number = extract_team_number(team_part)
+        notes = load_team_notes()
+        team_key = str(team_number)
+
+        if team_key in notes and note_part in notes[team_key]:
+            notes[team_key].remove(note_part)
+            if not notes[team_key]:
+                del notes[team_key]
+            save_team_notes(notes)
+            return jsonify({'reply': f"Deleted the note for Team {team_number}."})
+        else:
+            return jsonify({'reply': f"I couldn't find that note for Team {team_number}."})
+    except Exception:
+        return jsonify({'reply': "Something went wrong while deleting the note."})
+
+def edit_note(user_input):
+    try:
+        split_parts = user_input.split("edit:")
+        team_part = split_parts[0].strip()
+        edit_parts = split_parts[1].split("->")
+        old_note = edit_parts[0].strip()
+        new_note = edit_parts[1].strip()
+
+        team_number = extract_team_number(team_part)
+        notes = load_team_notes()
+        team_key = str(team_number)
+
+        if team_key in notes and old_note in notes[team_key]:
+            notes[team_key].remove(old_note)
+            notes[team_key].append(new_note)
+            save_team_notes(notes)
+            return jsonify({'reply': f"Updated the note for Team {team_number}."})
+        else:
+            return jsonify({'reply': f"I couldn't find that original note for Team {team_number}."})
+    except Exception:
+        return jsonify({'reply': "Something went wrong while editing the note. Format: '1507 edit: old note -> new note'."})
 
 # (Notes and Favorites Management would go here - same as before)
 
