@@ -199,8 +199,12 @@ def generate_statbotics_opinion(statbotics_info):
     if not statbotics_info:
         return ""
 
-    epa = statbotics_info.get('epa', 0)
-    epa_rank = statbotics_info.get('epa_rank', 9999)
+    try:
+        epa = float(statbotics_info.get('epa', 0) or 0)
+        epa_rank = int(statbotics_info.get('epa_rank', 9999) or 9999)
+    except Exception:
+        epa = 0
+        epa_rank = 9999
 
     opinion = []
 
