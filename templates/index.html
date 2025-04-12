@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Warlocks Scout Bot</title>
+    <style>
+        /* Chatbot container */
+        #chatbox {
+            width: 320px;
+            height: 500px;
+            border: 2px solid #ffd700;
+            border-radius: 15px;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            background-color: #0a1f44;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            z-index: 9999;
+        }
+
+        .message {
+            margin: 8px;
+            max-width: 80%;
+            padding: 12px;
+            border-radius: 20px;
+            clear: both;
+            font-size: 14px;
+        }
+
+        .user {
+            background-color: #ffd700;
+            color: #0a1f44;
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+        }
+
+        .bot {
+            background-color: #142850;
+            color: #ffffff;
+            align-self: flex-start;
+            border-bottom-left-radius: 0;
+        }
+
+        #inputArea {
+            display: flex;
+            margin-top: auto;
+            padding-top: 10px;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 8px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            margin-right: 5px;
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        #sendButton {
+            padding: 8px 12px;
+            border-radius: 10px;
+            background-color: #ffd700;
+            color: #0a1f44;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #sendButton:hover {
+            background-color: #e5c100;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            #chatbox {
+                width: 90%;
+                height: 450px;
+                bottom: 10px;
+                right: 5%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="chatbox">
+    <div id="messages"></div>
+    <div id="inputArea">
+        <input type="text" id="userInput" placeholder="Ask about a team..." />
+        <button id="sendButton" onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<script>
+// Initial greeting
+window.onload = function() {
+    addBotMessage("👋 Hello Warlock - let's scout!");
+};
+
+function sendMessage() {
+    const userInput = document.getElementById('userInput').value.trim();
+    if (!userInput) return;
+
+    addUserMessage(userInput);
+    scrollToBottom();
+
+    const typingId = addBotTyping();
+
+    fetch('/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team_number: userInput })
+    })
+    .then(response => response.json())
+    .then(data => {
+        setTimeout(() => {
+            removeBotTyping(typingId);
+            addBotMessage(data.reply);
+            scrollToBottom();
+        }, 1200);
+        document.getElementById('userInput').value = '';
+    })
+    .catch(error => {
+        removeBotTyping(typingId);
+        addBotMessage("⚠️ Sorry, something went wrong!");
+        console.error('Error:', error);
+        scrollToBottom();
+    });
+}
+
+// Add user message
+function addUserMessage(text) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message user';
+    messageDiv.innerText = text;
+    document.getElementById('messages').appendChild(messageDiv);
+}
+
+// Add bot message
+function addBotMessage(text) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message bot';
+    messageDiv.innerText = text;
+    document.getElementById('messages').appendChild(messageDiv);
+}
+
+// Typing animation
+function addBotTyping() {
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'message bot';
+    typingDiv.innerHTML = "<i>Scout Bot is thinking<span class='dots'>...</span></i>";
+    typingDiv.id = "typingMessage_" + Date.now();
+    document.getElementById('messages').appendChild(typingDiv);
+    scrollToBottom();
+    animateDots(typingDiv);
+    return typingDiv.id;
+}
+
+function animateDots(element) {
+    let dots = '';
+    setInterval(() => {
+        dots += '.';
+        if (dots.length > 3) dots = '';
+        element.innerHTML = `<i>Scout Bot is thinking<span class='dots'>${dots}</span></i>`;
+    }, 400);
+}
+
+function removeBotTyping(id) {
+    const typingDiv = document.getElementById(id);
+    if (typingDiv) {
+        typingDiv.remove();
+    }
+}
+
+// Scroll to bottom
+function scrollToBottom() {
+    const messagesDiv = document.getElementById('messages');
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+// Enter key sends
+document.getElementById('userInput').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+});
+</script>
+
+</body>
+</html>
