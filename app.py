@@ -98,20 +98,20 @@ def team_lookup(user_input):
 
     # Pull Statbotics data
     statbotics_info = fetch_statbotics_info(team_number)
-   # Inside team_lookup, after fetching statbotics_info
-if statbotics_info:
-    epa_data = statbotics_info.get('epa', {})
-    epa = epa_data.get('total_points', {}).get('mean', 'Not Available')
-    epa_rank = epa_data.get('ranks', {}).get('total', {}).get('rank', 'Not Available')
-    auto_epa = epa_data.get('breakdown', {}).get('auto_points', 'Not Available')
-    teleop_epa = epa_data.get('breakdown', {}).get('teleop_points', 'Not Available')
+    if statbotics_info:
+        epa_data = statbotics_info.get('epa', {})
+        epa = epa_data.get('total_points', {}).get('mean', 'Not Available')
+        epa_rank = epa_data.get('ranks', {}).get('total', {}).get('rank', 'Not Available')
+        auto_epa = epa_data.get('breakdown', {}).get('auto_points', 'Not Available')
+        teleop_epa = epa_data.get('breakdown', {}).get('teleop_points', 'Not Available')
 
-    statbotics_summary = (
-        f"📊 EPA: {epa} (Rank #{epa_rank}) | "
-        f"Auto: {auto_epa} | Teleop: {teleop_epa}"
-    )
-else:
-    statbotics_summary = "📊 Statbotics data not available."
+        statbotics_summary = (
+            f"📊 Overall EPA: {round(epa, 1) if isinstance(epa, (int, float)) else epa} (Rank #{epa_rank})\n"
+            f"🚀 Auto Points EPA: {round(auto_epa, 1) if isinstance(auto_epa, (int, float)) else auto_epa}\n"
+            f"🏹 Teleop Points EPA: {round(teleop_epa, 1) if isinstance(teleop_epa, (int, float)) else teleop_epa}"
+        )
+    else:
+        statbotics_summary = "📊 Statbotics data not available."
 
     scout_opinion = generate_scout_opinion(team_number)
     statbotics_opinion = generate_statbotics_opinion(statbotics_info)
@@ -120,11 +120,13 @@ else:
     team_notes = notes.get(str(team_number), [])
     notes_text = " ".join(team_notes) if team_notes else "No custom notes yet."
 
-    reply = (f"Team {team_number} - {nickname} is from {city}, {state}, {country}. "
-             f"Here’s what I found about their 2025 season: {event_summary} "
-             f"Scout opinion: {scout_opinion} {statbotics_opinion} "
-             f"{statbotics_summary} "
-             f"Notes: {notes_text}")
+    reply = (
+        f"Team {team_number} - {nickname} is from {city}, {state}, {country}.\n\n"
+        f"🏆 2025 Season Summary:\n{event_summary}\n\n"
+        f"🧠 Scout Opinion:\n{scout_opinion} {statbotics_opinion}\n\n"
+        f"{statbotics_summary}\n\n"
+        f"📝 Notes:\n{notes_text}"
+    )
 
     return jsonify({'reply': reply})
 
