@@ -5,6 +5,7 @@ import os
 
 app = Flask(__name__)
 
+# Load TBA API Key from environment variable
 TBA_AUTH_KEY = os.getenv('TBA_AUTH_KEY')
 TBA_API_BASE = 'https://www.thebluealliance.com/api/v3'
 
@@ -14,6 +15,7 @@ FAVORITES_FILE = 'favorites.json'
 @app.route('/')
 def home():
     return render_template('index.html')
+
 @app.route('/ask', methods=['POST'])
 def ask():
     try:
@@ -23,38 +25,41 @@ def ask():
         if not user_input:
             return jsonify({'reply': "Please provide a team number or a note!"})
 
-        # Compare teams
         if "compare" in user_input.lower():
             return compare_teams(user_input)
 
-        # Search notes
         if "search notes" in user_input.lower():
             return search_notes(user_input)
 
-        # Favorite / Unfavorite
         if "favorite" in user_input.lower() and "unfavorite" not in user_input.lower():
             return favorite_team(user_input)
+
         if "unfavorite" in user_input.lower():
             return unfavorite_team(user_input)
+
         if "list favorites" in user_input.lower():
             return list_favorites()
 
-        # Notes: list, add, edit, delete
         if "list notes" in user_input.lower():
             return list_notes()
+
         if "note:" in user_input.lower():
             return add_note(user_input)
+
         if "delete:" in user_input.lower():
             return delete_note(user_input)
+
         if "edit:" in user_input.lower():
             return edit_note(user_input)
 
-        # Regular team lookup
         return team_lookup(user_input)
 
     except Exception as e:
         print(f"Unexpected error: {e}")
         return jsonify({'reply': "⚠️ Sorry, something unexpected happened. Please try again."})
+
+# --- Team Lookup and Integrations ---
+
 def team_lookup(user_input):
     team_number = extract_team_number(user_input)
     if not team_number:
@@ -62,7 +67,7 @@ def team_lookup(user_input):
 
     headers = {"X-TBA-Auth-Key": TBA_AUTH_KEY}
     team_url = f"{TBA_API_BASE}/team/frc{team_number}"
-    team_response = requests.get(team_url)
+    team_response = requests.get(team_url, headers=headers)
 
     if team_response.status_code != 200:
         return jsonify({'reply': f"Sorry, I couldn't find team {team_number}. Please double check the number."})
@@ -74,14 +79,13 @@ def team_lookup(user_input):
     country = team_info.get('country', '')
 
     events_url = f"{TBA_API_BASE}/team/frc{team_number}/events/2024/statuses"
-    events_response = requests.get(events_url)
+    events_response = requests.get(events_url, headers=headers)
     if events_response.status_code == 200:
         events_info = events_response.json()
         event_summary = generate_event_summary(events_info)
     else:
         event_summary = "I couldn't load their current season info."
 
-    # Statbotics Integration
     statbotics_info = fetch_statbotics_info(team_number)
     if statbotics_info:
         epa = statbotics_info.get('epa', 'unknown')
@@ -109,203 +113,8 @@ def team_lookup(user_input):
              f"Notes: {notes_text}")
 
     return jsonify({'reply': reply})
-# --- Note Functions ---
 
-def load_team_notes():
-    if not os.path.exists(NOTES_FILE):
-        with open(NOTES_FILE, 'w') as f:
-            json.dump({}, f)
-    with open(NOTES_FILE, 'r') as f:
-        return json.load(f)
-
-def save_team_notes(notes):
-    with open(NOTES_FILE, 'w') as f:
-        json.dump(notes, f, indent=2)
-
-def add_note_to_team(team_number, note):
-    notes = load_team_notes()
-    team_key = str(team_number)
-    if team_key not in notes:
-        notes[team_key] = []
-    notes[team_key].append(note)
-    save_team_notes(notes)
-
-# --- Favorite Functions ---
-
-def load_favorites():
-    if not os.path.exists(FAVORITES_FILE):
-        with open(FAVORITES_FILE, 'w') as f:
-            json.dump([], f)
-    with open(FAVORITES_FILE, 'r') as f:
-        return json.load(f)
-
-def save_favorites(favorites):
-    with open(FAVORITES_FILE, 'w') as f:
-        json.dump(favorites, f, indent=2)
-
-def add_favorite(team_number):
-    favorites = load_favorites()
-    team_key = str(team_number)
-    if team_key not in favorites:
-        favorites.append(team_key)
-    save_favorites(favorites)
-
-def remove_favorite(team_number):
-    favorites = load_favorites()
-    team_key = str(team_number)
-    if team_key in favorites:
-        favorites.remove(team_key)
-    save_favorites(favorites)
-def compare_teams(user_input):
-    try:
-        parts = user_input.lower().split("compare")[1].strip().split("vs")
-        team1 = extract_team_number(parts[0])
-        team2 = extract_team_number(parts[1])
-
-        if not team1 or not team2:
-            return jsonify({'reply': "I couldn't figure out which two teams to compare."})
-
-        headers = {"X-TBA-Auth-Key": TBA_AUTH_KEY}
-        opr1 = fetch_opr(team1)
-        opr2 = fetch_opr(team2)
-
-        reply = (f"Team {team1} OPR: {opr1:.1f}\n"
-                 f"Team {team2} OPR: {opr2:.1f}\n")
-
-        if opr1 > opr2:
-            reply += f"🔮 Team {team1} tends to outscore Team {team2}."
-        elif opr2 > opr1:
-            reply += f"🔮 Team {team2} tends to outscore Team {team1}."
-        else:
-            reply += "🔮 These teams have similar scoring potential."
-
-        return jsonify({'reply': reply})
-    except Exception:
-        return jsonify({'reply': "Something went wrong while comparing teams. Try like: Compare 1507 vs 3015."})
-
-def fetch_opr(team_number):
-    try:
-        opr_url = f"{TBA_API_BASE}/team/frc{team_number}/oprs/2024"
-        headers = {"X-TBA-Auth-Key": TBA_AUTH_KEY}
-        response = requests.get(opr_url)
-        if response.status_code == 200:
-            oprs = response.json()
-            return oprs.get(f"frc{team_number}", 0)
-    except Exception:
-        return 0
-    return 0
-
-def search_notes(user_input):
-    try:
-        keyword = user_input.lower().split("search notes")[1].strip()
-        notes = load_team_notes()
-        matching_teams = []
-
-        for team, team_notes in notes.items():
-            for note in team_notes:
-                if keyword.lower() in note.lower():
-                    matching_teams.append(team)
-                    break
-
-        if matching_teams:
-            return jsonify({'reply': f"Teams mentioning '{keyword}': {', '.join(matching_teams)}"})
-        else:
-            return jsonify({'reply': f"No teams found mentioning '{keyword}'."})
-    except Exception:
-        return jsonify({'reply': "Something went wrong while searching notes. Try again!"})
-
-def add_note(user_input):
-    try:
-        split_parts = user_input.split("note:")
-        team_part = split_parts[0].strip()
-        note_part = split_parts[1].strip()
-
-        team_number = extract_team_number(team_part)
-        if not team_number:
-            return jsonify({'reply': "I couldn't figure out which team you're noting."})
-
-        add_note_to_team(team_number, note_part)
-        return jsonify({'reply': f"Got it! I saved your note for Team {team_number}."})
-    except Exception:
-        return jsonify({'reply': "Something went wrong while saving your note."})
-
-def delete_note(user_input):
-    try:
-        split_parts = user_input.split("delete:")
-        team_part = split_parts[0].strip()
-        note_part = split_parts[1].strip()
-
-        team_number = extract_team_number(team_part)
-        notes = load_team_notes()
-        team_key = str(team_number)
-
-        if team_key in notes and note_part in notes[team_key]:
-            notes[team_key].remove(note_part)
-            if not notes[team_key]:
-                del notes[team_key]
-            save_team_notes(notes)
-            return jsonify({'reply': f"Deleted the note for Team {team_number}."})
-        else:
-            return jsonify({'reply': f"I couldn't find that note for Team {team_number}."})
-    except Exception:
-        return jsonify({'reply': "Something went wrong while deleting the note."})
-
-def edit_note(user_input):
-    try:
-        split_parts = user_input.split("edit:")
-        team_part = split_parts[0].strip()
-        edit_parts = split_parts[1].split("->")
-        old_note = edit_parts[0].strip()
-        new_note = edit_parts[1].strip()
-
-        team_number = extract_team_number(team_part)
-        notes = load_team_notes()
-        team_key = str(team_number)
-
-        if team_key in notes and old_note in notes[team_key]:
-            notes[team_key].remove(old_note)
-            notes[team_key].append(new_note)
-            save_team_notes(notes)
-            return jsonify({'reply': f"Updated the note for Team {team_number}."})
-        else:
-            return jsonify({'reply': f"I couldn't find that original note for Team {team_number}."})
-    except Exception:
-        return jsonify({'reply': "Something went wrong while editing the note. Format: '1507 edit: old note -> new note'."})
-
-def list_notes():
-    notes = load_team_notes()
-    if not notes:
-        return jsonify({'reply': "There are no saved notes yet."})
-    team_list = ', '.join(sorted(notes.keys()))
-    return jsonify({'reply': f"Teams with saved notes: {team_list}"})
-
-def favorite_team(user_input):
-    team_number = extract_team_number(user_input)
-    if team_number:
-        add_favorite(team_number)
-        return jsonify({'reply': f"⭐ Team {team_number} has been added to your favorites!"})
-    else:
-        return jsonify({'reply': "I couldn't find which team to favorite."})
-
-def unfavorite_team(user_input):
-    team_number = extract_team_number(user_input)
-    if team_number:
-        remove_favorite(team_number)
-        return jsonify({'reply': f"🚫 Team {team_number} has been removed from your favorites."})
-    else:
-        return jsonify({'reply': "I couldn't find which team to unfavorite."})
-
-def list_favorites():
-    favorites = load_favorites()
-    if favorites:
-        return jsonify({'reply': f"⭐ Your favorite teams: {', '.join(favorites)}"})
-    else:
-        return jsonify({'reply': "You have no favorite teams yet."})
-def extract_team_number(text):
-    numbers = ''.join(c if c.isdigit() else ' ' for c in text).split()
-    if numbers:
-        return numbers[0]
-    return None
+# --- Helper Functions ---
 
 def fetch_statbotics_info(team_number):
     try:
@@ -317,6 +126,12 @@ def fetch_statbotics_info(team_number):
         print(f"Timeout fetching Statbotics data for team {team_number}")
     except Exception as e:
         print(f"Statbotics fetch error: {e}")
+    return None
+
+def extract_team_number(text):
+    numbers = ''.join(c if c.isdigit() else ' ' for c in text).split()
+    if numbers:
+        return numbers[0]
     return None
 
 def generate_event_summary(events_info):
@@ -396,6 +211,187 @@ def generate_statbotics_opinion(statbotics_info):
         opinion.append("🛡️ They can play strong defense when needed.")
 
     return " ".join(opinion)
+
+# --- Notes and Favorites Management ---
+
+def load_team_notes():
+    if not os.path.exists(NOTES_FILE):
+        with open(NOTES_FILE, 'w') as f:
+            json.dump({}, f)
+    with open(NOTES_FILE, 'r') as f:
+        return json.load(f)
+
+def save_team_notes(notes):
+    with open(NOTES_FILE, 'w') as f:
+        json.dump(notes, f, indent=2)
+
+def add_note_to_team(team_number, note):
+    notes = load_team_notes()
+    team_key = str(team_number)
+    if team_key not in notes:
+        notes[team_key] = []
+    notes[team_key].append(note)
+    save_team_notes(notes)
+
+def load_favorites():
+    if not os.path.exists(FAVORITES_FILE):
+        with open(FAVORITES_FILE, 'w') as f:
+            json.dump([], f)
+    with open(FAVORITES_FILE, 'r') as f:
+        return json.load(f)
+
+def save_favorites(favorites):
+    with open(FAVORITES_FILE, 'w') as f:
+        json.dump(favorites, f, indent=2)
+
+def add_favorite(team_number):
+    favorites = load_favorites()
+    team_key = str(team_number)
+    if team_key not in favorites:
+        favorites.append(team_key)
+    save_favorites(favorites)
+
+def remove_favorite(team_number):
+    favorites = load_favorites()
+    team_key = str(team_number)
+    if team_key in favorites:
+        favorites.remove(team_key)
+    save_favorites(favorites)
+
+# --- Favorite Commands ---
+
+def favorite_team(user_input):
+    team_number = extract_team_number(user_input)
+    if team_number:
+        add_favorite(team_number)
+        return jsonify({'reply': f"⭐ Team {team_number} has been added to your favorites!"})
+    else:
+        return jsonify({'reply': "I couldn't find which team to favorite."})
+
+def unfavorite_team(user_input):
+    team_number = extract_team_number(user_input)
+    if team_number:
+        remove_favorite(team_number)
+        return jsonify({'reply': f"🚫 Team {team_number} has been removed from your favorites."})
+    else:
+        return jsonify({'reply': "I couldn't find which team to unfavorite."})
+
+def list_favorites():
+    favorites = load_favorites()
+    if favorites:
+        return jsonify({'reply': f"⭐ Your favorite teams: {', '.join(favorites)}"})
+    else:
+        return jsonify({'reply': "You have no favorite teams yet."})
+
+# --- Notes Commands ---
+
+def list_notes():
+    notes = load_team_notes()
+    if not notes:
+        return jsonify({'reply': "There are no saved notes yet."})
+    team_list = ', '.join(sorted(notes.keys()))
+    return jsonify({'reply': f"Teams with saved notes: {team_list}"})
+
+def add_note(user_input):
+    try:
+        split_parts = user_input.split("note:")
+        team_part = split_parts[0].strip()
+        note_part = split_parts[1].strip()
+
+        team_number = extract_team_number(team_part)
+        if not team_number:
+            return jsonify({'reply': "I couldn't figure out which team you're noting."})
+
+        add_note_to_team(team_number, note_part)
+        return jsonify({'reply': f"Got it! I saved your note for Team {team_number}."})
+    except Exception:
+        return jsonify({'reply': "Something went wrong while saving your note."})
+
+def delete_note(user_input):
+    try:
+        split_parts = user_input.split("delete:")
+        team_part = split_parts[0].strip()
+        note_part = split_parts[1].strip()
+
+        team_number = extract_team_number(team_part)
+        notes = load_team_notes()
+        team_key = str(team_number)
+
+        if team_key in notes and note_part in notes[team_key]:
+            notes[team_key].remove(note_part)
+            if not notes[team_key]:
+                del notes[team_key]
+            save_team_notes(notes)
+            return jsonify({'reply': f"Deleted the note for Team {team_number}."})
+        else:
+            return jsonify({'reply': f"I couldn't find that note for Team {team_number}."})
+    except Exception:
+        return jsonify({'reply': "Something went wrong while deleting the note."})
+
+def edit_note(user_input):
+    try:
+        split_parts = user_input.split("edit:")
+        team_part = split_parts[0].strip()
+        edit_parts = split_parts[1].split("->")
+        old_note = edit_parts[0].strip()
+        new_note = edit_parts[1].strip()
+
+        team_number = extract_team_number(team_part)
+        notes = load_team_notes()
+        team_key = str(team_number)
+
+        if team_key in notes and old_note in notes[team_key]:
+            notes[team_key].remove(old_note)
+            notes[team_key].append(new_note)
+            save_team_notes(notes)
+            return jsonify({'reply': f"Updated the note for Team {team_number}."})
+        else:
+            return jsonify({'reply': f"I couldn't find that original note for Team {team_number}."})
+    except Exception:
+        return jsonify({'reply': "Something went wrong while editing the note. Format: '1507 edit: old note -> new note'."})
+
+# --- Compare Command ---
+
+def compare_teams(user_input):
+    try:
+        parts = user_input.lower().split("compare")[1].strip().split("vs")
+        team1 = extract_team_number(parts[0])
+        team2 = extract_team_number(parts[1])
+
+        if not team1 or not team2:
+            return jsonify({'reply': "I couldn't figure out which two teams to compare."})
+
+        headers = {"X-TBA-Auth-Key": TBA_AUTH_KEY}
+        opr1 = fetch_opr(team1)
+        opr2 = fetch_opr(team2)
+
+        reply = (f"Team {team1} OPR: {opr1:.1f}\n"
+                 f"Team {team2} OPR: {opr2:.1f}\n")
+
+        if opr1 > opr2:
+            reply += f"🔮 Team {team1} tends to outscore Team {team2}."
+        elif opr2 > opr1:
+            reply += f"🔮 Team {team2} tends to outscore Team {team1}."
+        else:
+            reply += "🔮 These teams have similar scoring potential."
+
+        return jsonify({'reply': reply})
+    except Exception:
+        return jsonify({'reply': "Something went wrong while comparing teams. Please try again!"})
+
+def fetch_opr(team_number):
+    try:
+        opr_url = f"{TBA_API_BASE}/team/frc{team_number}/oprs/2024"
+        headers = {"X-TBA-Auth-Key": TBA_AUTH_KEY}
+        response = requests.get(opr_url, headers=headers)
+        if response.status_code == 200:
+            oprs = response.json()
+            return oprs.get(f"frc{team_number}", 0)
+    except Exception:
+        return 0
+    return 0
+
+# --- Run the app ---
 
 if __name__ == '__main__':
     app.run(debug=True)
