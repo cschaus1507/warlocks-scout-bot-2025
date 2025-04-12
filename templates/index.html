@@ -8,40 +8,65 @@
     body {
       margin: 0;
       padding: 0;
-      background-color: #f5f5f5;
-      font-family: 'Arial', sans-serif;
+      background: linear-gradient(to bottom, #001f3f, #003366, #001f3f);
+      font-family: 'Poppins', sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
+      color: #333;
     }
 
     .chat-container {
       margin-top: 40px;
       width: 100%;
-      max-width: 500px;
+      max-width: 550px;
       background-color: white;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      border-radius: 15px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      animation: fadeIn 1s ease;
     }
 
     .chat-header {
-      background-color: #0b2240; /* Navy blue for Warlocks */
-      color: #FFD700; /* Gold for Warlocks */
-      padding: 15px;
-      font-size: 20px;
+      background: linear-gradient(90deg, #0b2240, #FFD700);
+      color: white;
+      padding: 18px;
+      font-size: 22px;
       font-weight: bold;
       text-align: center;
+      text-shadow: 1px 1px 2px #000;
+    }
+
+    .chat-instructions {
+      background-color: #f0f8ff;
+      padding: 15px;
+      border-bottom: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .chat-instructions h3 {
+      margin-top: 0;
+      color: #0b2240;
+    }
+
+    .chat-instructions ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    .chat-instructions li {
+      margin-bottom: 8px;
     }
 
     .chat-messages {
       flex: 1;
       padding: 20px;
       overflow-y: auto;
-      max-height: 400px;
+      max-height: 450px;
+      background-color: #f9f9f9;
     }
 
     .message {
@@ -50,6 +75,7 @@
       border-radius: 20px;
       max-width: 80%;
       word-wrap: break-word;
+      animation: popIn 0.4s ease;
     }
 
     .user-message {
@@ -68,26 +94,37 @@
       display: flex;
       padding: 15px;
       border-top: 1px solid #ccc;
-      background-color: #f9f9f9;
+      background-color: #ffffff;
     }
 
     input[type="text"] {
       flex: 1;
-      padding: 10px 15px;
+      padding: 12px 16px;
       font-size: 16px;
       border: 1px solid #ccc;
       border-radius: 8px;
+      transition: border-color 0.3s ease;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #FFD700;
     }
 
     button {
-      background-color: #0b2240;
-      color: #FFD700;
+      background: linear-gradient(90deg, #0b2240, #FFD700);
+      color: white;
       border: none;
       padding: 10px 20px;
       margin-left: 10px;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
+      transition: background 0.4s ease;
+    }
+
+    button:hover {
+      background: linear-gradient(90deg, #FFD700, #0b2240);
     }
 
     .typing {
@@ -97,53 +134,45 @@
       text-align: center;
     }
 
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
     @media (max-width: 600px) {
       .chat-container {
         width: 90%;
       }
-      .chat-instructions {
-  background-color: #f0f8ff;
-  padding: 15px;
-  border-bottom: 1px solid #ccc;
-  font-size: 14px;
-  color: #333;
-}
-
-.chat-instructions h3 {
-  margin-top: 0;
-  color: #0b2240;
-}
-
-.chat-instructions ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-.chat-instructions li {
-  margin-bottom: 8px;
-}
     }
   </style>
 </head>
 <body>
   <div class="chat-container">
     <div class="chat-header">Hello Warlock - Let's Scout!</div>
+
     <div class="chat-instructions">
-  <h3>📖 How to use:</h3>
-  <ul>
-    <li>Type a team number (ex: <strong>1507</strong>) to scout a team.</li>
-    <li><strong>favorite [team number]</strong> ⭐ — Save a team as favorite</li>
-    <li><strong>unfavorite [team number]</strong> 🚫 — Remove favorite</li>
-    <li><strong>list favorites</strong> 📜 — See all your favorite teams</li>
-    <li><strong>note: [your note]</strong> 📝 — Add a note to a team</li>
-    <li><strong>list notes</strong> 📚 — See teams you have notes for</li>
-    <li><strong>edit: [old note] -> [new note]</strong> ✏️ — Edit a note</li>
-    <li><strong>delete: [note]</strong> ❌ — Delete a note</li>
-  </ul>
-</div>
+      <h3>📖 How to use:</h3>
+      <ul>
+        <li>Type a team number (ex: <strong>1507</strong>) to scout a team.</li>
+        <li><strong>favorite [team number]</strong> ⭐ — Save a team as favorite</li>
+        <li><strong>unfavorite [team number]</strong> 🚫 — Remove favorite</li>
+        <li><strong>list favorites</strong> 📜 — See all your favorite teams</li>
+        <li><strong>note: [your note]</strong> 📝 — Add a note to a team</li>
+        <li><strong>list notes</strong> 📚 — See teams you have notes for</li>
+        <li><strong>edit: [old note] -> [new note]</strong> ✏️ — Edit a note</li>
+        <li><strong>delete: [note]</strong> ❌ — Delete a note</li>
+      </ul>
+    </div>
+
     <div class="chat-messages" id="chat-messages">
       <div class="bot-message">Hello Warlock 🧙‍♂️ - Let's Scout! Enter a team number like 1507...</div>
     </div>
+
     <div class="chat-input">
       <input type="text" id="team-number" placeholder="Enter team number or command..." onkeydown="if(event.key === 'Enter'){sendMessage();}">
       <button onclick="sendMessage()">Send</button>
