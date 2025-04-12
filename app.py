@@ -192,7 +192,7 @@ def generate_scout_opinion(team_number):
         opinion_parts.append("Scoring data is limited, but they could be an underdog!")
 
     if num_awards >= 3:
-        opinion_parts.append("They have a reputation for excellence this season.")
+        opinion_parts.append("They have won at least 3 awards and have a reputation for excellence this season.")
     elif num_awards >= 1:
         opinion_parts.append("They've picked up some awards this year.")
 
@@ -203,11 +203,10 @@ def generate_statbotics_opinion(statbotics_info):
         return ""
 
     try:
-        epa_data = statbotics_info.get('epa', {})
-        overall_epa = float(epa_data.get('total_points', {}).get('mean', 0) or 0)
-        epa_rank = int(epa_data.get('ranks', {}).get('total', {}).get('rank', 9999) or 9999)
-        auto_epa = float(epa_data.get('breakdown', {}).get('auto_points', 0) or 0)
-        teleop_epa = float(epa_data.get('breakdown', {}).get('teleop_points', 0) or 0)
+        overall_epa = float(statbotics_info.get('epa', 0) or 0)
+        epa_rank = int(statbotics_info.get('epa_rank', 9999) or 9999)
+        auto_epa = float(statbotics_info.get('auto_epa', 0) or 0)
+        teleop_epa = float(statbotics_info.get('teleop_epa', 0) or 0)
     except Exception:
         overall_epa = 0
         epa_rank = 9999
