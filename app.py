@@ -203,27 +203,46 @@ def generate_statbotics_opinion(statbotics_info):
         return ""
 
     try:
-        epa = float(statbotics_info.get('epa', 0) or 0)
-        epa_rank = int(statbotics_info.get('epa_rank', 9999) or 9999)
+        epa_data = statbotics_info.get('epa', {})
+        overall_epa = float(epa_data.get('total_points', {}).get('mean', 0) or 0)
+        epa_rank = int(epa_data.get('ranks', {}).get('total', {}).get('rank', 9999) or 9999)
+        auto_epa = float(epa_data.get('breakdown', {}).get('auto_points', 0) or 0)
+        teleop_epa = float(epa_data.get('breakdown', {}).get('teleop_points', 0) or 0)
     except Exception:
-        epa = 0
+        overall_epa = 0
         epa_rank = 9999
+        auto_epa = 0
+        teleop_epa = 0
 
-    opinion = []
+    opinion_parts = []
 
-    if epa > 95:
-        opinion.append("🚀 This team is top-tier based on EPA.")
-    elif epa > 85:
-        opinion.append("💪 This team has strong overall performance.")
-    elif epa > 65:
-        opinion.append("✅ This team is solid and reliable.")
+    # Overall EPA strength
+    if overall_epa > 95:
+        opinion_parts.append("🚀 They are a powerhouse team with world-class scoring!")
+    elif overall_epa > 85:
+        opinion_parts.append("💪 A very strong team capable of dominating matches.")
+    elif overall_epa > 65:
+        opinion_parts.append("✅ Solid and reliable — they will contribute strongly.")
     else:
-        opinion.append("🔎 This team may be developing or improving.")
+        opinion_parts.append("🔎 Developing team — can surprise if underestimated.")
 
+    # EPA Rank bonus
     if epa_rank <= 20:
-        opinion.append("🔥 They are ranked among the top 20 teams in the world!")
+        opinion_parts.append("🔥 Ranked among the top 20 teams in the world!")
 
-    return " ".join(opinion)
+    # Auto Game bonus
+    if auto_epa > 18:
+        opinion_parts.append("⚡ Excellent autonomous performance.")
+    elif auto_epa > 12:
+        opinion_parts.append("⚙️ Consistent auto routines.")
+
+    # Teleop Game bonus
+    if teleop_epa > 30:
+        opinion_parts.append("🎯 Very strong Teleop scoring.")
+    elif teleop_epa > 20:
+        opinion_parts.append("🏹 Good Teleop contributor.")
+
+    return " ".join(opinion_parts)
 
 # Paste your Notes and Favorites Management functions here (same as before)
 
