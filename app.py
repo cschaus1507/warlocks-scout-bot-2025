@@ -5,7 +5,7 @@ import os
 
 app = Flask(__name__)
 
-TBA_AUTH_KEY = 'GGdcwDM56HjCxhuHUF00LDEXA9ShrF4KYnfSs2nbpGkvJTgZ0R67rveTaTQAae54'
+TBA_AUTH_KEY = os.getenv('TBA_AUTH_KEY')
 TBA_API_BASE = 'https://www.thebluealliance.com/api/v3'
 
 NOTES_FILE = 'team_notes.json'
