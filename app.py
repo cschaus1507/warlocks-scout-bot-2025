@@ -87,17 +87,16 @@ def team_lookup(user_input):
         event_summary = "I couldn't load their current season info."
 
     statbotics_info = fetch_statbotics_info(team_number)
-    if statbotics_info:
-        epa = statbotics_info.get('epa', 'unknown')
-        epa_rank = statbotics_info.get('epa_rank', 'unknown')
-        offense_epa = statbotics_info.get('off_epa', 'unknown')
-        defense_epa = statbotics_info.get('def_epa', 'unknown')
+    from statbotics import Statbotics
 
-        statbotics_summary = (f"📊 EPA: {epa} (Rank #{epa_rank}) | "
-                              f"Offense: {offense_epa} | Defense: {defense_epa}")
-    else:
-        statbotics_summary = "📊 Statbotics data not available."
-        statbotics_info = None
+sb = Statbotics()
+
+def fetch_statbotics_info(team_number):
+    try:
+        return sb.get_team_year(int(team_number), 2025)
+    except Exception as e:
+        print(f"Error fetching Statbotics data for team {team_number}: {e}")
+        return None
 
     scout_opinion = generate_scout_opinion(team_number)
     statbotics_opinion = generate_statbotics_opinion(statbotics_info)
