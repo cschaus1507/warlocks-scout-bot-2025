@@ -91,44 +91,7 @@ def team_lookup(user_input):
 
     # Pull event statuses
     events_status_url = f"{TBA_API_BASE}/team/frc{team_number}/events/2025/statuses"
-    events_status_response = requests.get(events_status_url, headers=headers)
-    events_info = events_status_response.json() if events_status_response.status_code == 200 else {}
 
-    event_summary = generate_event_summary(events_info, events_list)
-
-    # Pull Statbotics data
-    statbotics_info = fetch_statbotics_info(team_number)
-    if statbotics_info:
-        epa_data = statbotics_info.get('epa', {})
-        epa = epa_data.get('total_points', {}).get('mean', 'Not Available')
-        epa_rank = epa_data.get('ranks', {}).get('total', {}).get('rank', 'Not Available')
-        auto_epa = epa_data.get('breakdown', {}).get('auto_points', 'Not Available')
-        teleop_epa = epa_data.get('breakdown', {}).get('teleop_points', 'Not Available')
-
-        statbotics_summary = (
-            f"📊 Overall EPA: {round(epa, 1) if isinstance(epa, (int, float)) else epa} (Rank #{epa_rank})\n"
-            f"🚀 Auto Points EPA: {round(auto_epa, 1) if isinstance(auto_epa, (int, float)) else auto_epa}\n"
-            f"🏹 Teleop Points EPA: {round(teleop_epa, 1) if isinstance(teleop_epa, (int, float)) else teleop_epa}"
-        )
-    else:
-        statbotics_summary = "📊 Statbotics data not available."
-
-    scout_opinion = generate_scout_opinion(team_number)
-    statbotics_opinion = generate_statbotics_opinion(statbotics_info)
-
-    notes = load_team_notes()
-    team_notes = notes.get(str(team_number), [])
-    notes_text = " ".join(team_notes) if team_notes else "No custom notes yet."
-
-    reply = (
-        f"Team {team_number} - {nickname} is from {city}, {state}, {country}.\n\n"
-        f"🏆 2025 Season Summary:\n{event_summary}\n\n"
-        f"🧠 Scout Opinion:\n{scout_opinion} {statbotics_opinion}\n\n"
-        f"{statbotics_summary}\n\n"
-        f"📝 Notes:\n{notes_text}"
-    )
-
-    return jsonify({'reply': reply})
 
 # --- Helper Functions ---
 
@@ -246,13 +209,6 @@ def generate_statbotics_opinion(statbotics_info):
 
     return " ".join(opinion_parts)
 
-# Paste your Notes and Favorites Management functions here (same as before)
-
-if __name__ == '__main__':
-    app.run(debug=True)
-
-
-# (Paste Notes and Favorites Management code here)
 # --- Notes and Favorites Management ---
 
 def load_team_notes():
