@@ -1,196 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Warlocks Scout Bot</title>
-    <style>
-        /* Chatbot container */
-        #chatbox {
-            width: 320px;
-            height: 500px;
-            border: 2px solid #ffd700;
-            border-radius: 15px;
-            padding: 10px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            background-color: #0a1f44;
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            z-index: 9999;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Warlocks Scout Bot 2025</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      font-family: 'Arial', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
 
-        .message {
-            margin: 8px;
-            max-width: 80%;
-            padding: 12px;
-            border-radius: 20px;
-            clear: both;
-            font-size: 14px;
-        }
+    .chat-container {
+      margin-top: 40px;
+      width: 100%;
+      max-width: 500px;
+      background-color: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
 
-        .user {
-            background-color: #ffd700;
-            color: #0a1f44;
-            align-self: flex-end;
-            border-bottom-right-radius: 0;
-        }
+    .chat-header {
+      background-color: #0b2240; /* Navy blue for Warlocks */
+      color: #FFD700; /* Gold for Warlocks */
+      padding: 15px;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
 
-        .bot {
-            background-color: #142850;
-            color: #ffffff;
-            align-self: flex-start;
-            border-bottom-left-radius: 0;
-        }
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      max-height: 400px;
+    }
 
-        #inputArea {
-            display: flex;
-            margin-top: auto;
-            padding-top: 10px;
-        }
+    .message {
+      margin-bottom: 15px;
+      padding: 12px 18px;
+      border-radius: 20px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
 
-        #userInput {
-            flex: 1;
-            padding: 8px;
-            border-radius: 10px;
-            border: 1px solid #ccc;
-            margin-right: 5px;
-            background-color: #ffffff;
-            color: #000000;
-        }
+    .user-message {
+      background-color: #0b2240;
+      color: white;
+      align-self: flex-end;
+    }
 
-        #sendButton {
-            padding: 8px 12px;
-            border-radius: 10px;
-            background-color: #ffd700;
-            color: #0a1f44;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-        }
+    .bot-message {
+      background-color: #e0e0e0;
+      color: #333;
+      align-self: flex-start;
+    }
 
-        #sendButton:hover {
-            background-color: #e5c100;
-        }
+    .chat-input {
+      display: flex;
+      padding: 15px;
+      border-top: 1px solid #ccc;
+      background-color: #f9f9f9;
+    }
 
-        /* Responsive */
-        @media (max-width: 600px) {
-            #chatbox {
-                width: 90%;
-                height: 450px;
-                bottom: 10px;
-                right: 5%;
-            }
-        }
-    </style>
+    input[type="text"] {
+      flex: 1;
+      padding: 10px 15px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    button {
+      background-color: #0b2240;
+      color: #FFD700;
+      border: none;
+      padding: 10px 20px;
+      margin-left: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .typing {
+      font-style: italic;
+      color: gray;
+      padding: 10px;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      .chat-container {
+        width: 90%;
+      }
+    }
+  </style>
 </head>
 <body>
-
-<div id="chatbox">
-    <div id="messages"></div>
-    <div id="inputArea">
-        <input type="text" id="userInput" placeholder="Ask about a team..." />
-        <button id="sendButton" onclick="sendMessage()">Send</button>
+  <div class="chat-container">
+    <div class="chat-header">Hello Warlock - Let's Scout!</div>
+    <div class="chat-messages" id="chat-messages">
+      <div class="bot-message">Hello Warlock 🧙‍♂️ - Let's Scout! Enter a team number like 1507...</div>
     </div>
-</div>
+    <div class="chat-input">
+      <input type="text" id="team-number" placeholder="Enter team number or command..." onkeydown="if(event.key === 'Enter'){sendMessage();}">
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
 
-<script>
-// Initial greeting
-window.onload = function() {
-    addBotMessage("👋 Hello Warlock - let's scout!");
-};
+  <script>
+    function addMessage(message, sender) {
+      const messageElement = document.createElement('div');
+      messageElement.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
+      messageElement.innerText = message;
+      document.getElementById('chat-messages').appendChild(messageElement);
+      document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+    }
 
-function sendMessage() {
-    const userInput = document.getElementById('userInput').value.trim();
-    if (!userInput) return;
+    function sendMessage() {
+      const input = document.getElementById('team-number');
+      const message = input.value.trim();
+      if (!message) return;
+      addMessage(message, 'user');
+      input.value = '';
 
-    addUserMessage(userInput);
-    scrollToBottom();
+      const typingIndicator = document.createElement('div');
+      typingIndicator.classList.add('typing');
+      typingIndicator.id = 'typing';
+      typingIndicator.innerText = 'Scout Bot is typing...';
+      document.getElementById('chat-messages').appendChild(typingIndicator);
 
-    const typingId = addBotTyping();
-
-    fetch('/ask', {
+      fetch('/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ team_number: userInput })
-    })
-    .then(response => response.json())
-    .then(data => {
-        setTimeout(() => {
-            removeBotTyping(typingId);
-            addBotMessage(data.reply);
-            scrollToBottom();
-        }, 1200);
-        document.getElementById('userInput').value = '';
-    })
-    .catch(error => {
-        removeBotTyping(typingId);
-        addBotMessage("⚠️ Sorry, something went wrong!");
-        console.error('Error:', error);
-        scrollToBottom();
-    });
-}
-
-// Add user message
-function addUserMessage(text) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'message user';
-    messageDiv.innerText = text;
-    document.getElementById('messages').appendChild(messageDiv);
-}
-
-// Add bot message
-function addBotMessage(text) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'message bot';
-    messageDiv.innerText = text;
-    document.getElementById('messages').appendChild(messageDiv);
-}
-
-// Typing animation
-function addBotTyping() {
-    const typingDiv = document.createElement('div');
-    typingDiv.className = 'message bot';
-    typingDiv.innerHTML = "<i>Scout Bot is thinking<span class='dots'>...</span></i>";
-    typingDiv.id = "typingMessage_" + Date.now();
-    document.getElementById('messages').appendChild(typingDiv);
-    scrollToBottom();
-    animateDots(typingDiv);
-    return typingDiv.id;
-}
-
-function animateDots(element) {
-    let dots = '';
-    setInterval(() => {
-        dots += '.';
-        if (dots.length > 3) dots = '';
-        element.innerHTML = `<i>Scout Bot is thinking<span class='dots'>${dots}</span></i>`;
-    }, 400);
-}
-
-function removeBotTyping(id) {
-    const typingDiv = document.getElementById(id);
-    if (typingDiv) {
-        typingDiv.remove();
+        body: JSON.stringify({ team_number: message })
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('typing').remove();
+        addMessage(data.reply, 'bot');
+      })
+      .catch(error => {
+        document.getElementById('typing').remove();
+        addMessage('Error: Could not reach Scout Bot.', 'bot');
+      });
     }
-}
-
-// Scroll to bottom
-function scrollToBottom() {
-    const messagesDiv = document.getElementById('messages');
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-
-// Enter key sends
-document.getElementById('userInput').addEventListener('keydown', function(event) {
-    if (event.key === 'Enter') {
-        sendMessage();
-    }
-});
-</script>
-
+  </script>
 </body>
 </html>
