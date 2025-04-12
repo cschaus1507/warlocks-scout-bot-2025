@@ -224,6 +224,27 @@ def generate_statbotics_opinion(statbotics_info):
     return " ".join(opinion_parts)
 
 # (Your notes and favorites management functions would go below if needed)
+def list_notes():
+    notes = load_team_notes()
+    if not notes:
+        return jsonify({'reply': "There are no saved notes yet."})
+    team_list = ', '.join(sorted(notes.keys()))
+    return jsonify({'reply': f"Teams with saved notes: {team_list}"})
+
+def add_note(user_input):
+    try:
+        split_parts = user_input.split("note:")
+        team_part = split_parts[0].strip()
+        note_part = split_parts[1].strip()
+
+        team_number = extract_team_number(team_part)
+        if not team_number:
+            return jsonify({'reply': "I couldn't figure out which team you're noting."})
+
+        add_note_to_team(team_number, note_part)
+        return jsonify({'reply': f"Got it! I saved your note for Team {team_number}."})
+    except Exception:
+        return jsonify({'reply': "Something went wrong while saving your note."})
 
 if __name__ == '__main__':
     app.run(debug=True)
