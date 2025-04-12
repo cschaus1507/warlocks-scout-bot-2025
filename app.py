@@ -134,13 +134,16 @@ def extract_team_number(text):
         return numbers[0]
     return None
 
-def generate_event_summary(events_info):
+def generate_event_summary(events_info, events_list):
     if not events_info:
         return "No events found."
+
     summaries = []
+    event_key_to_name = {event['key']: event['name'] for event in events_list}
+
     for event_key, info in events_info.items():
         try:
-            event_name = info.get('event_name', 'Unknown Event')
+            event_name = event_key_to_name.get(event_key, 'Unknown Event')
             playoff_status = info.get('playoff', {}).get('status', 'Unknown Status')
             rank = info.get('qual', {}).get('ranking', {}).get('rank', None)
             if rank:
@@ -150,6 +153,7 @@ def generate_event_summary(events_info):
         except Exception:
             continue
     return ' '.join(summaries)
+
 
 def generate_scout_opinion(team_number):
     headers = {"X-TBA-Auth-Key": TBA_AUTH_KEY}
