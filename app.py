@@ -118,7 +118,7 @@ def team_lookup(user_input):
 
 def fetch_statbotics_info(team_number):
     try:
-        url = f"https://api.statbotics.io/v2/team/{team_number}"
+        url = f"https://api.statbotics.io/v2/team_year/{team_number}/2025"
         response = requests.get(url, timeout=5)
         if response.status_code == 200:
             return response.json()
