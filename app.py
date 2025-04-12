@@ -97,18 +97,20 @@ def team_lookup(user_input):
     # Pull Statbotics data
     statbotics_info = fetch_statbotics_info(team_number)
     if statbotics_info:
-        epa = statbotics_info.get('epa', 'Not Available')
-        epa_rank = statbotics_info.get('epa_rank', 'Not Available')
-        auto_epa = statbotics_info.get('auto_epa', 'Not Available')
-        teleop_epa = statbotics_info.get('teleop_epa', 'Not Available')
+    epa_data = statbotics_info.get('epa', {})
+    epa = epa_data.get('total_points', {}).get('mean', 'Not Available')
+    epa_rank = epa_data.get('ranks', {}).get('total', {}).get('rank', 'Not Available')
+    auto_epa = epa_data.get('breakdown', {}).get('auto_points', 'Not Available')
+    teleop_epa = epa_data.get('breakdown', {}).get('teleop_points', 'Not Available')
 
-        statbotics_summary = (
-            f"📊 Overall EPA: {round(epa, 1) if isinstance(epa, (int, float)) else epa} (Rank #{epa_rank})\n"
-            f"🚀 Auto Points EPA: {round(auto_epa, 1) if isinstance(auto_epa, (int, float)) else auto_epa}\n"
-            f"🏹 Teleop Points EPA: {round(teleop_epa, 1) if isinstance(teleop_epa, (int, float)) else teleop_epa}"
-        )
+    statbotics_summary = (
+        f"📊 Overall EPA: {round(epa, 1) if isinstance(epa, (int, float)) else epa} (Rank #{epa_rank})\n"
+        f"🚀 Auto Points EPA: {round(auto_epa, 1) if isinstance(auto_epa, (int, float)) else auto_epa}\n"
+        f"🏹 Teleop Points EPA: {round(teleop_epa, 1) if isinstance(teleop_epa, (int, float)) else teleop_epa}"
+    )
     else:
-        statbotics_summary = "📊 Statbotics data not available."
+    statbotics_summary = "📊 Statbotics data not available."
+
 
     # Load notes
     notes = load_team_notes()
