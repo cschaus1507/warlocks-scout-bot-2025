@@ -98,19 +98,20 @@ def team_lookup(user_input):
 
     # Pull Statbotics data
     statbotics_info = fetch_statbotics_info(team_number)
-    if statbotics_info:
-        epa = statbotics_info.get('epa', 'Not Available')
-        epa_rank = statbotics_info.get('epa_rank', 'Not Available')
-        auto_epa = statbotics_info.get('auto_epa', 'Not Available')
-        teleop_epa = statbotics_info.get('teleop_epa', statbotics_info.get('endgame_epa', 'Not Available'))
+   # Inside team_lookup, after fetching statbotics_info
+if statbotics_info:
+    epa_data = statbotics_info.get('epa', {})
+    epa = epa_data.get('total_points', {}).get('mean', 'Not Available')
+    epa_rank = epa_data.get('ranks', {}).get('total', {}).get('rank', 'Not Available')
+    auto_epa = epa_data.get('breakdown', {}).get('auto_points', 'Not Available')
+    teleop_epa = epa_data.get('breakdown', {}).get('teleop_points', 'Not Available')
 
-        statbotics_summary = (
-            f"📊 EPA: {epa} (Rank #{epa_rank}) | "
-            f"Auto: {auto_epa} | Teleop: {teleop_epa}"
-        )
-    else:
-        statbotics_summary = "📊 Statbotics data not available."
-        statbotics_info = None
+    statbotics_summary = (
+        f"📊 EPA: {epa} (Rank #{epa_rank}) | "
+        f"Auto: {auto_epa} | Teleop: {teleop_epa}"
+    )
+else:
+    statbotics_summary = "📊 Statbotics data not available."
 
     scout_opinion = generate_scout_opinion(team_number)
     statbotics_opinion = generate_statbotics_opinion(statbotics_info)
