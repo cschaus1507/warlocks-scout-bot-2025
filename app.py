@@ -400,6 +400,9 @@ def edit_note(user_input):
             return jsonify({'reply': f"I couldn't find that original note for Team {team_number}."})
     except Exception:
         return jsonify({'reply': "Something went wrong while editing the note. Format: '1507 edit: old note -> new note'."})
+def extract_team_number(text):
+    numbers = ''.join(c if c.isdigit() else ' ' for c in text).split()
+    return numbers[0] if numbers else None
 
 if __name__ == '__main__':
     app.run(debug=True)
