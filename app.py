@@ -99,15 +99,15 @@ def team_lookup(user_input):
     # Pull Statbotics data
     statbotics_info = fetch_statbotics_info(team_number)
     if statbotics_info:
-auto_epa = statbotics_info.get('auto_epa', 'Not Available')
-teleop_epa = statbotics_info.get('teleop_epa', 'Not Available')
-endgame_epa = statbotics_info.get('endgame_epa', 'Not Available')
+        epa = statbotics_info.get('epa', 'Not Available')
+        epa_rank = statbotics_info.get('epa_rank', 'Not Available')
+        auto_epa = statbotics_info.get('auto_epa', 'Not Available')
+        teleop_epa = statbotics_info.get('teleop_epa', statbotics_info.get('endgame_epa', 'Not Available'))
 
-statbotics_summary = (
-    f"📊 EPA: {epa} (Rank #{epa_rank}) | "
-    f"Auto: {auto_epa} | Teleop: {teleop_epa} | Endgame: {endgame_epa}"
-)
-
+        statbotics_summary = (
+            f"📊 EPA: {epa} (Rank #{epa_rank}) | "
+            f"Auto: {auto_epa} | Teleop: {teleop_epa}"
+        )
     else:
         statbotics_summary = "📊 Statbotics data not available."
         statbotics_info = None
@@ -199,7 +199,7 @@ def generate_statbotics_opinion(statbotics_info):
     if not statbotics_info:
         return ""
 
-    epa = statbotics_info.get('epa_end', 0)
+    epa = statbotics_info.get('epa', 0)
     epa_rank = statbotics_info.get('epa_rank', 9999)
 
     opinion = []
@@ -217,6 +217,12 @@ def generate_statbotics_opinion(statbotics_info):
         opinion.append("🔥 They are ranked among the top 20 teams in the world!")
 
     return " ".join(opinion)
+
+# Paste your Notes and Favorites Management functions here (same as before)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
 
 # (Paste Notes and Favorites Management code here)
 # --- Notes and Favorites Management ---
