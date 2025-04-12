@@ -2,15 +2,13 @@ from flask import Flask, request, jsonify, render_template
 import requests
 import json
 import os
-from statbotics import Statbotics  # Official Statbotics client
+from statbotics import Statbotics
 
 app = Flask(__name__)
 
-# Load TBA API Key from environment variable
+# Load API key from environment
 TBA_AUTH_KEY = os.getenv('TBA_AUTH_KEY')
 TBA_API_BASE = 'https://www.thebluealliance.com/api/v3'
-
-# Initialize Statbotics client
 sb = Statbotics()
 
 NOTES_FILE = 'team_notes.json'
@@ -59,8 +57,8 @@ def ask():
         return team_lookup(user_input)
 
     except Exception as e:
-        print(f"Unexpected error: {e}")
-        return jsonify({'reply': "⚠️ Sorry, something unexpected happened. Please try again."})
+        print(f"Unexpected error inside /ask: {e}")
+        return jsonify({'reply': "⚠️ Sorry, something unexpected happened while scouting. Please try again."})
 
 # --- Team Lookup and Integrations ---
 
@@ -91,14 +89,51 @@ def team_lookup(user_input):
 
     # Pull event statuses
     events_status_url = f"{TBA_API_BASE}/team/frc{team_number}/events/2025/statuses"
+    events_status_response = requests.get(events_status_url, headers=headers)
+    events_info = events_status_response.json() if events_status_response.status_code == 200 else {}
 
+    event_summary = generate_event_summary(events_info, events_list)
+
+    # Pull Statbotics data
+    statbotics_info = fetch_statbotics_info(team_number)
+    if statbotics_info:
+        epa = statbotics_info.get('epa', 'Not Available')
+        epa_rank = statbotics_info.get('epa_rank', 'Not Available')
+        auto_epa = statbotics_info.get('auto_epa', 'Not Available')
+        teleop_epa = statbotics_info.get('teleop_epa', 'Not Available')
+
+        statbotics_summary = (
+            f"📊 Overall EPA: {round(epa, 1) if isinstance(epa, (int, float)) else epa} (Rank #{epa_rank})\n"
+            f"🚀 Auto Points EPA: {round(auto_epa, 1) if isinstance(auto_epa, (int, float)) else auto_epa}\n"
+            f"🏹 Teleop Points EPA: {round(teleop_epa, 1) if isinstance(teleop_epa, (int, float)) else teleop_epa}"
+        )
+    else:
+        statbotics_summary = "📊 Statbotics data not available."
+
+    # Load notes
+    notes = load_team_notes()
+    team_notes = notes.get(str(team_number), [])
+    notes_text = " ".join(team_notes) if team_notes else "No custom notes yet."
+
+    # Generate opinions
+    scout_opinion = generate_scout_opinion(team_number)
+    statbotics_opinion = generate_statbotics_opinion(statbotics_info)
+
+    reply = (
+        f"Team {team_number} - {nickname} is from {city}, {state}, {country}.\n\n"
+        f"🏆 2025 Season Summary:\n{event_summary}\n\n"
+        f"{statbotics_summary}\n\n"
+        f"📝 Notes:\n{notes_text}\n\n"
+        f"🧠 Scout Opinion:\n{scout_opinion} {statbotics_opinion}"
+    )
+
+    return jsonify({'reply': reply})
 
 # --- Helper Functions ---
 
 def fetch_statbotics_info(team_number):
     try:
         data = sb.get_team_year(int(team_number), 2025)
-        print(f"Statbotics data for {team_number}: {data}")
         return data
     except Exception as e:
         print(f"Error fetching Statbotics data for team {team_number}: {e}")
@@ -106,9 +141,7 @@ def fetch_statbotics_info(team_number):
 
 def extract_team_number(text):
     numbers = ''.join(c if c.isdigit() else ' ' for c in text).split()
-    if numbers:
-        return numbers[0]
-    return None
+    return numbers[0] if numbers else None
 
 def generate_event_summary(events_info, events_list):
     if not events_info:
@@ -139,30 +172,12 @@ def generate_scout_opinion(team_number):
     awards_response = requests.get(awards_url, headers=headers)
     num_awards = len(awards_response.json()) if awards_response.status_code == 200 else 0
 
-    opr_url = f"{TBA_API_BASE}/team/frc{team_number}/oprs/2025"
-    opr_response = requests.get(opr_url, headers=headers)
-    opr = 0
-    if opr_response.status_code == 200:
-        oprs = opr_response.json()
-        opr = oprs.get(f"frc{team_number}", 0)
-
-    opinion_parts = []
-
-    if opr > 90:
-        opinion_parts.append("They are an elite scorer.")
-    elif opr > 50:
-        opinion_parts.append("They have strong scoring abilities.")
-    elif opr > 0:
-        opinion_parts.append("They contribute valuable points to their alliances.")
-    else:
-        opinion_parts.append("Scoring data is limited, but they could be an underdog!")
-
     if num_awards >= 3:
-        opinion_parts.append("They have won at least 3 awards and have a reputation for excellence this season.")
+        return "🏅 Multiple award-winning team this season."
     elif num_awards >= 1:
-        opinion_parts.append("They've picked up some awards this year.")
-
-    return " ".join(opinion_parts)
+        return "🎖️ Recognized with at least one award."
+    else:
+        return "🧹 No awards yet — a true underdog story in progress."
 
 def generate_statbotics_opinion(statbotics_info):
     if not statbotics_info:
@@ -181,33 +196,170 @@ def generate_statbotics_opinion(statbotics_info):
 
     opinion_parts = []
 
-    # Overall EPA strength
     if overall_epa > 95:
-        opinion_parts.append("🚀 They are a powerhouse team with world-class scoring!")
+        opinion_parts.append("🚀 Top-tier team with elite scoring capability.")
     elif overall_epa > 85:
-        opinion_parts.append("💪 A very strong team capable of dominating matches.")
+        opinion_parts.append("💪 Strong team — capable of winning big matches.")
     elif overall_epa > 65:
-        opinion_parts.append("✅ Solid and reliable — they will contribute strongly.")
+        opinion_parts.append("✅ Reliable and solid alliance partner.")
+    elif overall_epa > 40:
+        opinion_parts.append("🔎 Middle-tier team — can surprise with good play.")
     else:
-        opinion_parts.append("🔎 Developing team — can surprise if underestimated.")
+        opinion_parts.append("🧪 Developmental team — may be finding their stride.")
 
-    # EPA Rank bonus
     if epa_rank <= 20:
-        opinion_parts.append("🔥 Ranked among the top 20 teams in the world!")
+        opinion_parts.append("🔥 Ranked among the top 20 worldwide — elite company!")
 
-    # Auto Game bonus
-    if auto_epa > 18:
-        opinion_parts.append("⚡ Excellent autonomous performance.")
+    if auto_epa > 20:
+        opinion_parts.append("⚡ Excellent autonomous routine — fast starter!")
     elif auto_epa > 12:
-        opinion_parts.append("⚙️ Consistent auto routines.")
+        opinion_parts.append("⚙️ Solid and consistent auto.")
 
-    # Teleop Game bonus
-    if teleop_epa > 30:
-        opinion_parts.append("🎯 Very strong Teleop scoring.")
+    if teleop_epa > 35:
+        opinion_parts.append("🎯 High teleop scoring threat — dominates midgame.")
     elif teleop_epa > 20:
-        opinion_parts.append("🏹 Good Teleop contributor.")
+        opinion_parts.append("🏹 Good teleop contributor.")
 
     return " ".join(opinion_parts)
+
+# --- Notes and Favorites Management ---
+
+def load_team_notes():
+    if not os.path.exists(NOTES_FILE):
+        with open(NOTES_FILE, 'w') as f:
+            json.dump({}, f)
+    with open(NOTES_FILE, 'r') as f:
+        return json.load(f)
+
+def save_team_notes(notes):
+    with open(NOTES_FILE, 'w') as f:
+        json.dump(notes, f, indent=2)
+
+def add_note_to_team(team_number, note):
+    notes = load_team_notes()
+    team_key = str(team_number)
+    if team_key not in notes:
+        notes[team_key] = []
+    notes[team_key].append(note)
+    save_team_notes(notes)
+
+def load_favorites():
+    if not os.path.exists(FAVORITES_FILE):
+        with open(FAVORITES_FILE, 'w') as f:
+            json.dump([], f)
+    with open(FAVORITES_FILE, 'r') as f:
+        return json.load(f)
+
+def save_favorites(favorites):
+    with open(FAVORITES_FILE, 'w') as f:
+        json.dump(favorites, f, indent=2)
+
+def add_favorite(team_number):
+    favorites = load_favorites()
+    team_key = str(team_number)
+    if team_key not in favorites:
+        favorites.append(team_key)
+    save_favorites(favorites)
+
+def remove_favorite(team_number):
+    favorites = load_favorites()
+    team_key = str(team_number)
+    if team_key in favorites:
+        favorites.remove(team_key)
+    save_favorites(favorites)
+
+def favorite_team(user_input):
+    team_number = extract_team_number(user_input)
+    if team_number:
+        add_favorite(team_number)
+        return jsonify({'reply': f"⭐ Team {team_number} has been added to your favorites!"})
+    else:
+        return jsonify({'reply': "I couldn't find which team to favorite."})
+
+def unfavorite_team(user_input):
+    team_number = extract_team_number(user_input)
+    if team_number:
+        remove_favorite(team_number)
+        return jsonify({'reply': f"🚫 Team {team_number} has been removed from your favorites."})
+    else:
+        return jsonify({'reply': "I couldn't find which team to unfavorite."})
+
+def list_favorites():
+    favorites = load_favorites()
+    if favorites:
+        return jsonify({'reply': f"⭐ Your favorite teams: {', '.join(favorites)}"})
+    else:
+        return jsonify({'reply': "You have no favorite teams yet."})
+
+def list_notes():
+    notes = load_team_notes()
+    if not notes:
+        return jsonify({'reply': "There are no saved notes yet."})
+    team_list = ', '.join(sorted(notes.keys()))
+    return jsonify({'reply': f"Teams with saved notes: {team_list}"})
+
+def add_note(user_input):
+    try:
+        split_parts = user_input.split("note:")
+        team_part = split_parts[0].strip()
+        note_part = split_parts[1].strip()
+
+        team_number = extract_team_number(team_part)
+        if not team_number:
+            return jsonify({'reply': "I couldn't figure out which team you're noting."})
+
+        add_note_to_team(team_number, note_part)
+        return jsonify({'reply': f"Got it! I saved your note for Team {team_number}."})
+    except Exception:
+        return jsonify({'reply': "Something went wrong while saving your note."})
+
+def delete_note(user_input):
+    try:
+        split_parts = user_input.split("delete:")
+        team_part = split_parts[0].strip()
+        note_part = split_parts[1].strip()
+
+        team_number = extract_team_number(team_part)
+        notes = load_team_notes()
+        team_key = str(team_number)
+
+        if team_key in notes and note_part in notes[team_key]:
+            notes[team_key].remove(note_part)
+            if not notes[team_key]:
+                del notes[team_key]
+            save_team_notes(notes)
+            return jsonify({'reply': f"Deleted the note for Team {team_number}."})
+        else:
+            return jsonify({'reply': f"I couldn't find that note for Team {team_number}."})
+    except Exception:
+        return jsonify({'reply': "Something went wrong while deleting the note."})
+
+def edit_note(user_input):
+    try:
+        split_parts = user_input.split("edit:")
+        team_part = split_parts[0].strip()
+        edit_parts = split_parts[1].split("->")
+        old_note = edit_parts[0].strip()
+        new_note = edit_parts[1].strip()
+
+        team_number = extract_team_number(team_part)
+        notes = load_team_notes()
+        team_key = str(team_number)
+
+        if team_key in notes and old_note in notes[team_key]:
+            notes[team_key].remove(old_note)
+            notes[team_key].append(new_note)
+            save_team_notes(notes)
+            return jsonify({'reply': f"Updated the note for Team {team_number}."})
+        else:
+            return jsonify({'reply': f"I couldn't find that original note for Team {team_number}."})
+    except Exception:
+        return jsonify({'reply': "Something went wrong while editing the note."})
+
+# --- Main ---
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 # --- Notes and Favorites Management ---
 
