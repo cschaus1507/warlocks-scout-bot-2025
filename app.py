@@ -328,14 +328,32 @@ def save_team_notes(notes):
     with open(NOTES_FILE, 'w') as f:
         json.dump(notes, f, indent=2)
 
-def add_note_to_team(team_number, note_text):
-    notes = load_team_notes()
-    team_key = str(team_number)
-    timestamp = datetime.now().strftime("%Y-%m-%d")
-    if team_key not in notes:
-        notes[team_key] = []
-    notes[team_key].append({"text": note_text, "timestamp": timestamp})
-    save_team_notes(notes)
+def add_note(user_input):
+    try:
+        if "note:" in user_input.lower():
+            split_parts = user_input.lower().split("note:")
+        elif "note" in user_input.lower():
+            split_parts = user_input.lower().split("note")
+        else:
+            return jsonify({'reply': "⚠️ Please type 'note:' followed by team number and your note."})
+
+        team_part = split_parts[0].strip()
+        note_text = split_parts[1].strip()
+
+        team_number = extract_team_number(team_part)
+        if not team_number:
+            team_number = extract_team_number(note_text)  # Try to find in second part
+
+        if not team_number:
+            return jsonify({'reply': "⚠️ I still couldn't figure out which team you're noting. Please try again."})
+
+        # Clean the note text to remove team number from it
+        note_text = " ".join([word for word in note_text.split() if not word.isdigit()])
+
+        add_note_to_team(team_number, note_text)
+        return jsonify({'reply': f"📝 Note added for Team {team_number}!"})
+    except Exception:
+        return jsonify({'reply': "⚠️ Something went wrong while saving your note."})
 
 def generate_notes_display(team_number):
     notes = load_team_notes()
