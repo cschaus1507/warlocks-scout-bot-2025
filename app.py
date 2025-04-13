@@ -379,12 +379,12 @@ def generate_last_event_statistics(team_number):
 
         # Step 5: Format the output
         stats_report = (
-            f"🏟️ Most Recent Event Statistics from {event_name}. ⚠️ Note: Statistics reflect total average alliance performance, not individual team contribution.\n"
+            f"🏟️ Most Recent Event Statistics from {event_name}.\n"
             f"(based on {matches_played} matches)\n\n"
-            f"• Average Auto Coral Count: {avg_auto_coral:.1f}\n"
-            f"• Average Teleop Coral Count: {avg_teleop_coral:.1f}\n"
-            f"• Average Processor Algae Count (Wall): {avg_processor_algae:.1f}\n"
-            f"• Average Barge Algae Count (Net): {avg_barge_algae:.1f}\n"
+            f"• Auto Coral (Alliance Average): {avg_auto_coral:.1f}\n"
+            f"• Teleop Coral (Allaince Average): {avg_teleop_coral:.1f}\n"
+            f"• Processor Algae (Alliance Average): {avg_processor_algae:.1f}\n"
+            f"• Barge Algae (Alliance Average): {avg_barge_algae:.1f}\n"
         )
 
         return stats_report
