@@ -8,7 +8,7 @@
         body {
             background: url('/static/warlocks_logo.jpg') no-repeat center center fixed;
             background-size: cover;
-            background-color: #0A0A23; /* Fallback navy if image doesn't load */
+            background-color: #0A0A23;
             margin: 0;
             font-family: 'Arial', sans-serif;
             display: flex;
@@ -24,7 +24,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(10, 10, 35, 0.7); /* Dark overlay */
+            background-color: rgba(10, 10, 35, 0.7);
             z-index: 0;
         }
         .container {
@@ -34,7 +34,7 @@
             align-items: center;
             width: 90%;
             max-width: 600px;
-            background-color: #FFF8DC; /* Pale yellow */
+            background-color: #FFF8DC;
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
@@ -50,7 +50,7 @@
             margin-bottom: 10px;
         }
         .chatbox {
-            background-color: white;
+            background-color: #E6F2FF;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -103,13 +103,46 @@
             border-radius: 0 20px 20px 0;
             margin-left: 5px;
         }
-        /* Fade-in animation */
+        /* Modal styling */
+        #instructions-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 3;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: left;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0px 5px 15px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        .modal-content h2 {
+            margin-top: 0;
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
-        }
-        .fade-in {
-            animation: fadeIn 0.5s ease;
         }
     </style>
 </head>
@@ -119,28 +152,40 @@
     <div class="container">
         <div class="instructions">
             <h1>Welcome, Warlock! 🔮</h1>
-            <p>The 1507 ScoutBot pulls data from both "The Blue Alliance" and "Statbotics"
-            </p>
             <p>
-                ScoutBot Commands:<br>
-                <b>Scout a team</b>: Type the team # to get started<br>
-                <b>Favorite a team</b>: Type the word "favorite" and then team #<br>
-                <b>List favorites</b>: list favorites<br>
-                <b>Add a note</b>: ex: "note: 1507 Great scorer!"<br>
-                <b>List notes</b>: list notes<br>
-                <b>Edit note</b>: edit note 1 for team 1507 -> Updated text<br>
-                <b>Delete note</b>: delete note 1 for team 1507
+                The 1507 ScoutBot pulls data from
+                <a href="https://www.thebluealliance.com/" target="_blank" style="color:blue; text-decoration:underline;">The Blue Alliance</a>
+                and
+                <a href="https://www.statbotics.io/" target="_blank" style="color:blue; text-decoration:underline;">Statbotics</a>.
             </p>
+            <button onclick="openInstructions()">How to Use</button>
         </div>
 
         <div class="chatbox" id="chatbox">
-            <div class="bot-message fade-in">👋 Hello Warlock — how can I assist your scouting today?</div>
+            <div class="bot-message fade-in">👋 Hello Warlock — how can I assist your scouting today?
+            </div>
         </div>
 
         <div class="input-container">
             <input type="text" id="user-input" placeholder="Type a command...">
             <button onclick="sendMessage()">Send</button>
             <button onclick="clearChat()" class="clear-btn">Clear</button>
+        </div>
+    </div>
+
+    <div id="instructions-modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeInstructions()">&times;</button>
+            <h2>How to Use ScoutBot</h2>
+            <ul>
+                <li><b>Scout a team:</b> Type a team number (e.g., 1507)</li>
+                <li><b>Favorite a team:</b> Type "favorite 1507"</li>
+                <li><b>List favorites:</b> Type "list favorites"</li>
+                <li><b>Add a note:</b> Type "note: 1507 Great scorer!"</li>
+                <li><b>List notes:</b> Type "list notes"</li>
+                <li><b>Edit a note:</b> Type "edit note 1 for team 1507 -> Updated text"</li>
+                <li><b>Delete a note:</b> Type "delete note 1 for team 1507"</li>
+            </ul>
         </div>
     </div>
 
@@ -175,16 +220,14 @@
             try {
                 const response = await fetch('/ask', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ team_number: message })
                 });
                 const data = await response.json();
                 botTyping.innerText = data.reply;
                 chatbox.scrollTop = chatbox.scrollHeight;
             } catch (error) {
-                botTyping.innerText = '⚠️ Something went wrong. Please try again.';
+                botTyping.innerText = '\u26a0\ufe0f Something went wrong. Please try again.';
             }
         }
 
@@ -192,6 +235,15 @@
             const chatbox = document.getElementById('chatbox');
             chatbox.innerHTML = '<div class="bot-message fade-in">👋 Hello Warlock — how can I assist your scouting today?</div>';
         }
+
+        function openInstructions() {
+            document.getElementById('instructions-modal').style.display = 'flex';
+        }
+
+        function closeInstructions() {
+            document.getElementById('instructions-modal').style.display = 'none';
+        }
     </script>
 </body>
 </html>
+
