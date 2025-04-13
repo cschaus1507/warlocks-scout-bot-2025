@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template
 import requests
 import json
 import os
+from datetime import datetime
 from statbotics import Statbotics
 import traceback
 
@@ -46,13 +47,13 @@ def ask():
         if "list notes" in user_input.lower():
             return list_notes()
 
-        if "note:" in user_input.lower():
+        if "note" in user_input.lower():
             return add_note(user_input)
 
-        if "delete:" in user_input.lower():
+        if "delete note" in user_input.lower():
             return delete_note(user_input)
 
-        if "edit:" in user_input.lower():
+        if "edit note" in user_input.lower():
             return edit_note(user_input)
 
         return team_lookup(user_input)
@@ -112,9 +113,7 @@ def team_lookup(user_input):
     else:
         statbotics_summary = "📊 Statbotics data not available."
 
-    notes = load_team_notes()
-    team_notes = notes.get(str(team_number), [])
-    notes_text = " ".join(team_notes) if team_notes else "No custom notes yet."
+    notes_text = generate_notes_display(team_number)
 
     scout_opinion = generate_scout_opinion(team_number)
     statbotics_opinion = generate_statbotics_opinion(statbotics_info)
@@ -132,7 +131,6 @@ def team_lookup(user_input):
 # --- Helper Functions ---
 
 def extract_team_number(text):
-    # Pull the first valid team number (3 or 4 digit number) from text
     numbers = ''.join(c if c.isdigit() else ' ' for c in text).split()
     for num in numbers:
         if len(num) >= 3:
@@ -273,13 +271,11 @@ def unfavorite_team(user_input):
 def list_favorites():
     favorites = load_favorites()
     if favorites:
-        return jsonify({'reply': f"⭐ Your favorite teams: {', '.join(favorites)}"})
+        return jsonify({'reply': "⭐ Your favorite teams:\n" + "\n".join(favorites)})
     else:
         return jsonify({'reply': "You have no favorite teams yet."})
 
-from datetime import datetime
-
-# --- Upgraded Notes Management ---
+# --- Notes Management ---
 
 def load_team_notes():
     if not os.path.exists(NOTES_FILE):
@@ -291,6 +287,15 @@ def load_team_notes():
 def save_team_notes(notes):
     with open(NOTES_FILE, 'w') as f:
         json.dump(notes, f, indent=2)
+
+def add_note_to_team(team_number, note_text):
+    notes = load_team_notes()
+    team_key = str(team_number)
+    timestamp = datetime.now().strftime("%Y-%m-%d")
+    if team_key not in notes:
+        notes[team_key] = []
+    notes[team_key].append({"text": note_text, "timestamp": timestamp})
+    save_team_notes(notes)
 
 def add_note(user_input):
     try:
@@ -311,7 +316,6 @@ def add_note(user_input):
         if not team_number:
             return jsonify({'reply': "⚠️ I still couldn't figure out which team you're noting. Please try again."})
 
-        # Clean note_text to remove team number if accidentally left
         cleaned_note_text = " ".join([word for word in note_text.split() if not word.isdigit()])
 
         add_note_to_team(team_number, cleaned_note_text)
@@ -384,8 +388,6 @@ def edit_note(user_input):
             return jsonify({'reply': "Couldn't find that note to edit."})
     except Exception:
         return jsonify({'reply': "Something went wrong while editing the note."})
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)
