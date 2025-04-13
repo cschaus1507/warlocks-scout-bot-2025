@@ -227,8 +227,6 @@ def generate_statbotics_opinion(statbotics_info):
 
     return " ".join(opinion_parts)
 
-# (Your notes and favorites management functions would go below if needed)
-
 # --- Favorites Management ---
 
 def load_favorites():
@@ -331,21 +329,6 @@ def generate_notes_display(team_number):
     for idx, note in enumerate(notes[team_key], 1):
         output.append(f"{idx}. {note['text']} (added {note['timestamp']})")
     return "\n".join(output)
-
-def add_note(user_input):
-    try:
-        split_parts = user_input.split("note:")
-        team_part = split_parts[0].strip()
-        note_text = split_parts[1].strip()
-
-        team_number = extract_team_number(team_part)
-        if not team_number:
-            return jsonify({'reply': "I couldn't figure out which team you're noting."})
-
-        add_note_to_team(team_number, note_text)
-        return jsonify({'reply': f"📝 Note added for Team {team_number}!"})
-    except Exception:
-        return jsonify({'reply': "Something went wrong while saving your note."})
 
 def list_notes():
     notes = load_team_notes()
