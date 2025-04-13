@@ -271,41 +271,91 @@ def generate_statbotics_opinion(statbotics_info):
     
 def generate_specialty_from_latest_event(team_number):
     try:
-        events = sb.get_team_events(team=team_number, year=2025)
+        headers = {
+            "X-TBA-Auth-Key": TBA_AUTH_KEY
+        }
+
+        # Get list of events
+        events_url = f"{TBA_API_BASE}/team/frc{team_number}/events/2025/simple"
+        events_response = requests.get(events_url, headers=headers)
+        events_response.raise_for_status()
+        events = events_response.json()
 
         if not events:
             return "⭐ Specialty Scoring data not available."
 
-        latest_event = events[-1]
+        # Get latest event (based on event end_date)
+        latest_event = sorted(events, key=lambda e: e.get('end_date', ''))[-1]
         event_key = latest_event.get('key')
 
         if not event_key:
             return "⭐ Specialty Scoring data not available."
 
-        event_data = sb.get_team_event(int(team_number), event_key)
-        breakdown = event_data.get('breakdown', {})
+        # Get all matches from the latest event
+        matches_url = f"{TBA_API_BASE}/event/{event_key}/matches"
+        matches_response = requests.get(matches_url, headers=headers)
+        matches_response.raise_for_status()
+        matches = matches_response.json()
 
-        auto_coral = breakdown.get('auto_coral_points', 0)
-        teleop_coral = breakdown.get('teleop_coral_points', 0)
-        total_coral = auto_coral + teleop_coral
-        barge_points = breakdown.get('barge_points', 0)
-        processor_algae = breakdown.get('processor_algae_points', 0)
-        endgame_points = breakdown.get('endgame_points', 0)
+        if not matches:
+            return "⭐ Specialty Scoring data not available."
+
+        # Initialize totals
+        auto_coral_total = 0
+        teleop_coral_total = 0
+        barge_total = 0
+        processor_algae_total = 0
+        endgame_total = 0
+        match_count = 0
+
+        for match in matches:
+            alliances = match.get('alliances', {})
+            blue = alliances.get('blue', {})
+            red = alliances.get('red', {})
+
+            # Determine which alliance the team was in
+            if f"frc{team_number}" in blue.get('team_keys', []):
+                breakdown = blue.get('score_breakdown', {})
+            elif f"frc{team_number}" in red.get('team_keys', []):
+                breakdown = red.get('score_breakdown', {})
+            else:
+                continue  # Team didn't play this match
+
+            if not breakdown:
+                continue  # Skip if no breakdown available
+
+            auto_coral_total += breakdown.get('auto_coral_points', 0)
+            teleop_coral_total += breakdown.get('teleop_coral_points', 0)
+            barge_total += breakdown.get('barge_points', 0)
+            processor_algae_total += breakdown.get('processor_algae_points', 0)
+            endgame_total += breakdown.get('endgame_points', 0)
+            match_count += 1
+
+        if match_count == 0:
+            return "⭐ Specialty Scoring data not available."
+
+        # Calculate averages
+        avg_auto_coral = auto_coral_total / match_count
+        avg_teleop_coral = teleop_coral_total / match_count
+        avg_total_coral = avg_auto_coral + avg_teleop_coral
+        avg_barge = barge_total / match_count
+        avg_processor_algae = processor_algae_total / match_count
+        avg_endgame = endgame_total / match_count
 
         specialties = []
 
-        if total_coral > 30:
+        if avg_total_coral > 30:
             specialties.append("🪸 Coral Specialist")
 
-        if processor_algae > 4:
+        if avg_processor_algae > 4:
             specialties.append("🧪 Processor Algae Expert")
 
-        if barge_points > 10:
+        if avg_barge > 10:
             specialties.append("🛶 Strong Barge Scorer")
 
-        if endgame_points >= 8:
+        if avg_endgame >= 8:
             specialties.append("🧗 Deep Cage Climber")
-        elif endgame_points >= 3:
+        elif avg_endgame >= 3:
             specialties.append("🪜 Shallow Cage Climber")
         else:
             specialties.append("🚶 No consistent climb detected")
@@ -315,6 +365,7 @@ def generate_specialty_from_latest_event(team_number):
     except Exception as e:
         print(f"Error generating specialty from event: {e}")
         return "⭐ Specialty Scoring data not available."
+
 
 # --- Favorites Management ---
 
