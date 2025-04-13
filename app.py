@@ -283,8 +283,10 @@ def generate_last_event_statistics(team_number):
             "X-TBA-Auth-Key": TBA_AUTH_KEY
         }
 
+        team_key = f"frc{team_number}"
+
         # Step 1: Pull latest event
-        events_url = f"{TBA_API_BASE}/team/frc{team_number}/events/2025/simple"
+        events_url = f"{TBA_API_BASE}/team/{team_key}/events/2025/simple"
         events_response = requests.get(events_url, headers=headers)
         events_response.raise_for_status()
         events = events_response.json()
@@ -320,24 +322,24 @@ def generate_last_event_statistics(team_number):
             blue = alliances.get('blue', {})
             red = alliances.get('red', {})
 
-            breakdown = None
-
-            if f"frc{team_number}" in blue.get('team_keys', []):
-                breakdown = blue.get('score_breakdown', {})
-            elif f"frc{team_number}" in red.get('team_keys', []):
-                breakdown = red.get('score_breakdown', {})
+            alliance = None
+            if team_key in blue.get('team_keys', []):
+                alliance = blue
+            elif team_key in red.get('team_keys', []):
+                alliance = red
             else:
-                continue
+                continue  # team not in this match
 
+            breakdown = alliance.get('score_breakdown', {})
             if not breakdown:
-                continue
+                continue  # no score data
 
-            total_auto_coral += breakdown.get('autoCoralPoints', 0)
-            total_teleop_coral += breakdown.get('teleopCoralPoints', 0)
-            total_processor_algae += breakdown.get('algaePoints', 0)
-            total_barge_algae += breakdown.get('endGameBargePoints', 0)
+            total_auto_coral += breakdown.get('autoCoralCount', 0)
+            total_teleop_coral += breakdown.get('teleopCoralCount', 0)
+            total_processor_algae += breakdown.get('wallAlgaeCount', 0)
+            total_barge_algae += breakdown.get('netAlgaeCount', 0)
 
-            # Endgame climb tracking for 2025 Reefscape
+            # Track climb statuses
             for robot_key in ['endGameRobot1', 'endGameRobot2', 'endGameRobot3']:
                 climb_result = breakdown.get(robot_key, "")
                 if climb_result == "OnStage":
@@ -368,10 +370,10 @@ def generate_last_event_statistics(team_number):
             f"🏟️ Event: {event_name}\n"
             f"(based on {matches_played} matches)\n\n"
             f"📊 Last Event Statistics:\n"
-            f"• Average Auto Coral Points: {avg_auto_coral:.1f}\n"
-            f"• Average Teleop Coral Points: {avg_teleop_coral:.1f}\n"
-            f"• Average Processor Algae Points: {avg_processor_algae:.1f}\n"
-            f"• Average Barge Algae Points: {avg_barge_algae:.1f}\n\n"
+            f"• Average Auto Coral Count: {avg_auto_coral:.1f}\n"
+            f"• Average Teleop Coral Count: {avg_teleop_coral:.1f}\n"
+            f"• Average Processor Algae Count (Wall): {avg_processor_algae:.1f}\n"
+            f"• Average Barge Algae Count (Net): {avg_barge_algae:.1f}\n\n"
             f"🏁 Endgame Tendencies per Match:\n"
             f"• Parked: {avg_park:.1f}\n"
             f"• Deep Cage Climb (OnStage): {avg_deep_climb:.1f}\n"
@@ -383,7 +385,6 @@ def generate_last_event_statistics(team_number):
     except Exception as e:
         print(f"💥 Error generating last event statistics: {e}")
         return "⭐ Last Event Statistics not available."
-
 
 # --- Favorites Management ---
 
