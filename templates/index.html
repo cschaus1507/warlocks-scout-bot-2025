@@ -6,7 +6,9 @@
     <title>Warlocks Scout Bot</title>
     <style>
         body {
-            background-color: #0A0A23; /* Deep Navy Blue */
+            background: url('/static/warlocks_logo.jpg') no-repeat center center fixed;
+            background-size: cover;
+            background-color: #0A0A23; /* Fallback navy if image doesn't load */
             margin: 0;
             font-family: 'Arial', sans-serif;
             display: flex;
@@ -15,6 +17,15 @@
             min-height: 100vh;
             position: relative;
             overflow-x: hidden;
+        }
+        .background-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(10, 10, 35, 0.7); /* Dark overlay to soften logo */
+            z-index: 0;
         }
         .container {
             margin-top: 80px;
@@ -27,15 +38,12 @@
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
         }
         .instructions {
             text-align: center;
             margin-bottom: 20px;
-        }
-        .instructions img {
-            width: 100px;
-            height: auto;
-            margin-bottom: 10px;
         }
         .instructions h1 {
             font-size: 22px;
@@ -94,9 +102,10 @@
     </style>
 </head>
 <body>
+    <div class="background-overlay"></div>
+
     <div class="container">
         <div class="instructions">
-            <img src="/static/warlocks_logo.jpg" alt="Warlocks Logo">
             <h1>Welcome, Warlock! 🔮</h1>
             <p>
                 Commands:<br>
