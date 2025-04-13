@@ -126,7 +126,9 @@
         <div class="input-container">
             <input type="text" id="user-input" placeholder="Type a command...">
             <button onclick="sendMessage()">Send</button>
+            <button onclick="clearChat()" style="background-color: #880000;">Clear</button>
         </div>
+
     </div>
 
     <script>
@@ -138,42 +140,41 @@
             }
         });
 
-        async function sendMessage() {
-            const message = inputField.value.trim();
-            if (!message) return;
+async function sendMessage() {
+    const message = inputField.value.trim();
+    if (!message) return;
 
-            const chatbox = document.getElementById('chatbox');
+    const chatbox = document.getElementById('chatbox');
 
-            // Display user message
-            const userMsg = document.createElement('div');
-            userMsg.className = 'message user-message';
-            userMsg.innerText = message;
-            chatbox.appendChild(userMsg);
+    const userMsg = document.createElement('div');
+    userMsg.className = 'message user-message fade-in';
+    userMsg.innerText = message;
+    chatbox.appendChild(userMsg);
 
-            inputField.value = '';
+    inputField.value = '';
 
-            // Show typing...
-            const botTyping = document.createElement('div');
-            botTyping.className = 'message bot-message';
-            botTyping.innerText = 'Scout Bot is typing...';
-            chatbox.appendChild(botTyping);
-            chatbox.scrollTop = chatbox.scrollHeight;
+    const botTyping = document.createElement('div');
+    botTyping.className = 'message bot-message fade-in';
+    botTyping.innerText = 'Scout Bot is typing...';
+    chatbox.appendChild(botTyping);
+    chatbox.scrollTop = chatbox.scrollHeight;
 
-            try {
-                const response = await fetch('/ask', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ team_number: message })
-                });
-                const data = await response.json();
-                botTyping.innerText = data.reply;
-                chatbox.scrollTop = chatbox.scrollHeight;
-            } catch (error) {
-                botTyping.innerText = '⚠️ Something went wrong. Please try again.';
-            }
-        }
+    try {
+        const response = await fetch('/ask', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ team_number: message })
+        });
+        const data = await response.json();
+        botTyping.innerText = data.reply;
+        chatbox.scrollTop = chatbox.scrollHeight;
+    } catch (error) {
+        botTyping.innerText = '⚠️ Something went wrong. Please try again.';
+    }
+}
+
     </script>
 </body>
 </html>
