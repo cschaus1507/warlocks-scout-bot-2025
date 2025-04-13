@@ -137,7 +137,7 @@ def team_lookup(user_input):
     reply = (
         f"🏷️ Team {team_number} - {nickname}\n"
         f"📍 Location: {city}, {state}, {country}\n"
-        f"{favorited_text}\n\n"
+        f"{favorited_text}\n"
         
         f"{epa_summary}\n"
 
