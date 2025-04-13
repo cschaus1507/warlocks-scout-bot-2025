@@ -134,12 +134,12 @@ def team_lookup(user_input):
         f"🏷️ Team {team_number} - {nickname}\n"
         f"📍 Location: {city}, {state}, {country}\n\n"
         
-        f"{epa_summary}\n"
-        
-        f"{last_event_stats}\n\n"
-        
+        f"{epa_summary}\n\n"
+
         f"📝 Notes:\n"
         f"{notes_text}\n\n"
+        
+        f"{last_event_stats}\n\n"
         
         f"🧠 Scout Opinion:\n"
         f"{scout_opinion} {statbotics_opinion}\n\n"
@@ -374,18 +374,12 @@ def generate_last_event_statistics(team_number):
 
         # Step 5: Format the output
         stats_report = (
-            f"🏟️ Most Recent Event: {event_name}\n"
-            f"(based on {matches_played} matches)\n"
-            f"⚠️ Note: Statistics reflect total alliance performance, not individual team contribution.\n\n"
-            f"📊 Most Recent Event Statistics - Alliance Averages:\n"
+            f"🏟️ Most Recent Event Statistics from {event_name}. ⚠️ Note: Statistics reflect total average alliance performance, not individual team contribution.\n"
+            f"(based on {matches_played} matches)\n\n"
             f"• Average Auto Coral Count: {avg_auto_coral:.1f}\n"
             f"• Average Teleop Coral Count: {avg_teleop_coral:.1f}\n"
             f"• Average Processor Algae Count (Wall): {avg_processor_algae:.1f}\n"
             f"• Average Barge Algae Count (Net): {avg_barge_algae:.1f}\n"
-            f"🏁 Endgame Tendencies per Match:\n"
-            f"• Parked: {avg_park:.1f}\n"
-            f"• Deep Cage Climb: {avg_deep_climb:.1f}\n"
-            f"• Shallow Cage Climb: {avg_shallow_climb:.1f}\n"
         )
 
         return stats_report
