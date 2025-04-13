@@ -6,53 +6,47 @@
     <title>Warlocks Scout Bot</title>
     <style>
         body {
-            background-color: #FFD700; /* Bold gold */
+            background-color: #0A0A23; /* Deep Navy Blue */
             margin: 0;
             font-family: 'Arial', sans-serif;
-            position: relative;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        .background-logo {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            opacity: 0.07;
-            z-index: 0;
-            width: 70%;
-            max-width: 800px;
-            pointer-events: none;
-        }
-        .container {
-            position: relative;
-            z-index: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            padding: 20px;
             min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        .logo {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 80px;
+            height: auto;
+        }
+        .container {
+            margin-top: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 90%;
+            max-width: 600px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
         }
         .instructions {
-            background-color: white;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
             text-align: center;
+            margin-bottom: 20px;
         }
         .chatbox {
-            background-color: white;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 600px;
-            padding: 20px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
             gap: 10px;
-            margin-bottom: 100px;
+            width: 100%;
+            max-height: 60vh;
+            overflow-y: auto;
+            margin-bottom: 20px;
         }
         .message {
             background-color: #f2f2f2;
@@ -66,20 +60,18 @@
         }
         .bot-message {
             align-self: flex-start;
-            background-color: white;
+            background-color: #ffffff;
             border: 1px solid #ccc;
         }
         .input-container {
             display: flex;
             width: 100%;
-            max-width: 600px;
-            margin-top: auto;
         }
         input[type="text"] {
             flex-grow: 1;
             padding: 12px;
             border-radius: 20px 0 0 20px;
-            border: none;
+            border: 1px solid #ccc;
             font-size: 16px;
         }
         button {
@@ -97,20 +89,20 @@
     </style>
 </head>
 <body>
-    <img src="/static/warlocks_logo.jpg" alt="Warlocks Logo" class="background-logo">
+    <img src="/static/warlocks_logo.jpg" alt="Warlocks Logo" class="logo">
 
     <div class="container">
         <div class="instructions">
-            <h1>Welcome, Warlock! Let's Scout! 🔮</h1>
+            <h1>Welcome, Warlock! 🔮</h1>
             <p>
-                Commands you can try:
-                <br><b>Scout a team</b>: 1507 or team 254
-                <br><b>Favorite a team</b>: favorite 1507
-                <br><b>List favorites</b>: list favorites
-                <br><b>Add a note</b>: note: 1507 Fast scorer!
-                <br><b>List notes</b>: list notes
-                <br><b>Edit note</b>: edit note 1 for team 1507 -> Updated text
-                <br><b>Delete note</b>: delete note 1 for team 1507
+                Commands:<br>
+                <b>Scout a team</b>: 1507<br>
+                <b>Favorite a team</b>: favorite 1507<br>
+                <b>List favorites</b>: list favorites<br>
+                <b>Add a note</b>: note: 1507 Great scorer!<br>
+                <b>List notes</b>: list notes<br>
+                <b>Edit note</b>: edit note 1 for team 1507 -> Updated text<br>
+                <b>Delete note</b>: delete note 1 for team 1507
             </p>
         </div>
 
@@ -125,8 +117,15 @@
     </div>
 
     <script>
+        const inputField = document.getElementById('user-input');
+
+        inputField.addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
+
         async function sendMessage() {
-            const inputField = document.getElementById('user-input');
             const message = inputField.value.trim();
             if (!message) return;
 
