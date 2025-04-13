@@ -100,6 +100,8 @@ def team_lookup(user_input):
 
     # Pull Statbotics data
     statbotics_info = fetch_statbotics_info(team_number)
+
+    # --- EPA Summary
     if statbotics_info:
         epa_data = statbotics_info.get('epa', {})
         epa = epa_data.get('total_points', {}).get('mean', 'Not Available')
@@ -107,25 +109,51 @@ def team_lookup(user_input):
         auto_epa = epa_data.get('breakdown', {}).get('auto_points', 'Not Available')
         teleop_epa = epa_data.get('breakdown', {}).get('teleop_points', 'Not Available')
 
-        statbotics_summary = (
-            f"📊 Overall EPA: {round(epa, 1) if isinstance(epa, (int, float)) else epa} (Rank #{epa_rank})\n"
-            f"🚀 Auto Points EPA: {round(auto_epa, 1) if isinstance(auto_epa, (int, float)) else auto_epa}\n"
-            f"🏹 Teleop Points EPA: {round(teleop_epa, 1) if isinstance(teleop_epa, (int, float)) else teleop_epa}"
+        epa_summary = (
+            f"\ud83d\udcca EPA Data:\n"
+            f"Overall EPA: {round(epa, 1) if isinstance(epa, (int, float)) else epa} (Rank #{epa_rank})\n"
+            f"Auto Phase EPA: {round(auto_epa, 1) if isinstance(auto_epa, (int, float)) else auto_epa}\n"
+            f"Teleop Phase EPA: {round(teleop_epa, 1) if isinstance(teleop_epa, (int, float)) else teleop_epa}\n"
         )
     else:
-        statbotics_summary = "📊 Statbotics data not available."
+        epa_summary = "\ud83d\udcca EPA Data not available."
 
-    notes_text = generate_notes_display(team_number)
+    # --- Specialty Scoring Breakdown
+    if statbotics_info:
+        breakdown = statbotics_info.get('epa', {}).get('breakdown', {})
+        total_coral = breakdown.get('auto_coral_points', 0) + breakdown.get('teleop_coral_points', 0)
+        barge_points = breakdown.get('barge_points', 0)
+        processor_algae = breakdown.get('processor_algae_points', 0)
 
+        specialties = []
+        if total_coral > 50:
+            specialties.append("\ud83e\udeb8 Coral Specialist")
+        if barge_points > 15:
+            specialties.append("\ud83d\udea6 Strong Barge Scorer")
+        if processor_algae > 5:
+            specialties.append("\ud83e\uddec Processor Algae Expert")
+
+        specialty_summary = "\u2b50 Specialty Scoring:\n" + " ".join(specialties) if specialties else "\u2b50 No major specialty scoring trends identified."
+    else:
+        specialty_summary = "\u2b50 Specialty Scoring data not available."
+
+    # --- Load notes
+    notes = load_team_notes()
+    team_notes = notes.get(str(team_number), [])
+    notes_text = "\n".join(f"- {note}" for note in team_notes) if team_notes else "No custom notes yet."
+
+    # --- Generate scouting opinion
     scout_opinion = generate_scout_opinion(team_number)
     statbotics_opinion = generate_statbotics_opinion(statbotics_info)
 
     reply = (
-        f"Team {team_number} - {nickname} is from {city}, {state}, {country}.\n\n"
-        f"🏆 2025 Season Summary:\n{event_summary}\n\n"
-        f"{statbotics_summary}\n\n"
-        f"📝 Notes:\n{notes_text}\n\n"
-        f"🧠 Scout Opinion:\n{scout_opinion} {statbotics_opinion}"
+        f"\ud83c\udff7\ufe0f Team {team_number} - {nickname}\n"
+        f"\ud83d\udccd Location: {city}, {state}, {country}\n\n"
+        f"{epa_summary}\n"
+        f"{specialty_summary}\n\n"
+        f"\ud83d\udcdd Notes:\n{notes_text}\n\n"
+        f"\ud83e\uddd0 Scout Opinion:\n{scout_opinion} {statbotics_opinion}\n\n"
+        f"\ud83d\udcdc 2025 Season Summary:\n{event_summary}"
     )
 
     return jsonify({'reply': reply})
