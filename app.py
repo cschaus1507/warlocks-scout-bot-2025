@@ -85,6 +85,10 @@ def team_lookup(user_input):
     city = team_info.get('city', 'Unknown City')
     state = team_info.get('state_prov', '')
     country = team_info.get('country', '')
+    
+    # --- Check if team is favorited
+    favorites = load_favorites()
+    favorited_text = "⭐ Favorited Team!\n\n" if str(team_number) in favorites else ""
 
     # Pull event names
     events_list_url = f"{TBA_API_BASE}/team/frc{team_number}/events/2025"
@@ -132,7 +136,8 @@ def team_lookup(user_input):
 
     reply = (
         f"🏷️ Team {team_number} - {nickname}\n"
-        f"📍 Location: {city}, {state}, {country}\n\n"
+        f"📍 Location: {city}, {state}, {country}\n
+        f"{favorited_text}"\n\n"
         
         f"{epa_summary}\n"
 
