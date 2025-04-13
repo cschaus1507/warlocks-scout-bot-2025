@@ -290,7 +290,11 @@ def generate_last_event_statistics(team_number):
         events_response = requests.get(events_url, headers=headers)
         events_response.raise_for_status()
         events = events_response.json()
-
+        #temporary debug
+        print(f"DEBUG matches_url: {matches_url}")
+        print(f"DEBUG status code: {matches_response.status_code}")
+        print(f"DEBUG matches: {matches[:1]}")  # Only show first match
+         #end temporary debug
         if not events:
             return "⭐ No event data available."
 
