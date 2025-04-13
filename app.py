@@ -285,31 +285,31 @@ def generate_last_event_statistics(team_number):
 
         team_key = f"frc{team_number}"
 
-        # Step 1: Pull latest event
+        # Step 1: Pull list of 2025 events
         events_url = f"{TBA_API_BASE}/team/{team_key}/events/2025/simple"
         events_response = requests.get(events_url, headers=headers)
         events_response.raise_for_status()
         events = events_response.json()
-        #temporary debug
-        print(f"DEBUG matches_url: {matches_url}")
-        print(f"DEBUG status code: {matches_response.status_code}")
-        print(f"DEBUG matches: {matches[:1]}")  # Only show first match
-         #end temporary debug
+
         if not events:
             return "⭐ No event data available."
 
-        latest_event = sorted(events, key=lambda e: e.get('end_date', ''))[-1]
-        event_key = latest_event.get('key')
-        event_name = latest_event.get('name', 'Unknown Event')
+        # Step 2: Find latest event where matches exist
+        matches = []
+        event_name = "Unknown Event"
+        for event in sorted(events, key=lambda e: e.get('end_date', ''), reverse=True):
+            event_key = event.get('key')
+            event_name = event.get('name', 'Unknown Event')
 
-        # Step 2: Pull matches
-        matches_url = f"{TBA_API_BASE}/event/{event_key}/matches"
-        matches_response = requests.get(matches_url, headers=headers)
-        matches_response.raise_for_status()
-        matches = matches_response.json()
+            matches_url = f"{TBA_API_BASE}/event/{event_key}/matches"
+            matches_response = requests.get(matches_url, headers=headers)
+            matches_response.raise_for_status()
+            matches = matches_response.json()
 
-        if not matches:
-            return "⭐ No match data available."
+            if matches:  # Found event with matches
+                break
+        else:
+            return "⭐ No valid event with match data available."
 
         # Step 3: Initialize totals
         total_auto_coral = 0
@@ -338,7 +338,7 @@ def generate_last_event_statistics(team_number):
                 continue  # Team didn't play in this match
 
             if not breakdown:
-                continue  # No breakdown for alliance
+                continue
 
             # Add up scoring fields
             total_auto_coral += breakdown.get('autoCoralCount', 0)
