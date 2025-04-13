@@ -130,28 +130,14 @@ def team_lookup(user_input):
     return jsonify({'reply': reply})
 
 # --- Helper Functions ---
-def load_team_notes():
-    if not os.path.exists(NOTES_FILE):
-        with open(NOTES_FILE, 'w') as f:
-            json.dump({}, f)
-    with open(NOTES_FILE, 'r') as f:
-        return json.load(f)
-
-def save_team_notes(notes):
-    with open(NOTES_FILE, 'w') as f:
-        json.dump(notes, f, indent=2)
-
-def add_note_to_team(team_number, note):
-    notes = load_team_notes()
-    team_key = str(team_number)
-    if team_key not in notes:
-        notes[team_key] = []
-    notes[team_key].append(note)
-    save_team_notes(notes)
 
 def extract_team_number(text):
+    # Pull the first valid team number (3 or 4 digit number) from text
     numbers = ''.join(c if c.isdigit() else ' ' for c in text).split()
-    return numbers[0] if numbers else None
+    for num in numbers:
+        if len(num) >= 3:
+            return num
+    return None
 
 def generate_event_summary(events_info, events_list):
     if not events_info:
@@ -276,7 +262,7 @@ def favorite_team(user_input):
         add_favorite(team_number)
         return jsonify({'reply': f"⭐ Team {team_number} has been added to your favorites!"})
     else:
-        return jsonify({'reply': "I couldn't find which team to favorite."})
+        return jsonify({'reply': "⚠️ I couldn't find a valid team number to favorite."})
 
 def unfavorite_team(user_input):
     team_number = extract_team_number(user_input)
@@ -311,9 +297,9 @@ def save_team_notes(notes):
 def add_note(user_input):
     try:
         if "note:" in user_input.lower():
-            split_parts = user_input.lower().split("note:")
+            split_parts = user_input.split("note:")
         elif "note" in user_input.lower():
-            split_parts = user_input.lower().split("note")
+            split_parts = user_input.split("note")
         else:
             return jsonify({'reply': "⚠️ Please type 'note:' followed by team number and your note."})
 
@@ -322,15 +308,15 @@ def add_note(user_input):
 
         team_number = extract_team_number(team_part)
         if not team_number:
-            team_number = extract_team_number(note_text)  # Try to find in second part
+            team_number = extract_team_number(note_text)
 
         if not team_number:
             return jsonify({'reply': "⚠️ I still couldn't figure out which team you're noting. Please try again."})
 
-        # Clean the note text to remove team number from it
-        note_text = " ".join([word for word in note_text.split() if not word.isdigit()])
+        # Clean note_text to remove team number if accidentally left
+        cleaned_note_text = " ".join([word for word in note_text.split() if not word.isdigit()])
 
-        add_note_to_team(team_number, note_text)
+        add_note_to_team(team_number, cleaned_note_text)
         return jsonify({'reply': f"📝 Note added for Team {team_number}!"})
     except Exception:
         return jsonify({'reply': "⚠️ Something went wrong while saving your note."})
