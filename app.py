@@ -124,7 +124,7 @@ def team_lookup(user_input):
     # --- Load notes
     notes = load_team_notes()
     team_notes = notes.get(str(team_number), [])
-    notes_text = "\n".join(f"- {note}" for note in team_notes) if team_notes else "No custom notes yet."
+    notes_text = "\n".join(f"- {note['text']} (added {note['timestamp']})" for note in team_notes) if team_notes else "No custom notes yet."
 
     # --- Generate scouting opinion
     scout_opinion = generate_scout_opinion(team_number)
@@ -277,7 +277,13 @@ def generate_specialty_from_latest_event(team_number):
             return "⭐ Specialty Scoring data not available."
 
         latest_event = events[-1]
-        breakdown = latest_event.get('breakdown', {})
+        event_key = latest_event.get('key')
+
+        if not event_key:
+            return "⭐ Specialty Scoring data not available."
+
+        event_data = sb.get_team_event(int(team_number), event_key)
+        breakdown = event_data.get('breakdown', {})
 
         auto_coral = breakdown.get('auto_coral_points', 0)
         teleop_coral = breakdown.get('teleop_coral_points', 0)
