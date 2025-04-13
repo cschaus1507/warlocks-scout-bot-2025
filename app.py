@@ -193,14 +193,29 @@ def generate_statbotics_opinion(statbotics_info):
         epa_rank = epa_data.get('ranks', {}).get('total', {}).get('rank', 9999)
         auto_epa = epa_data.get('breakdown', {}).get('auto_points', 0)
         teleop_epa = epa_data.get('breakdown', {}).get('teleop_points', 0)
+
+        # Specialty stats
+        auto_coral = epa_data.get('breakdown', {}).get('auto_coral_points', 0)
+        teleop_coral = epa_data.get('breakdown', {}).get('teleop_coral_points', 0)
+        total_coral = auto_coral + teleop_coral
+
+        processor_algae = epa_data.get('breakdown', {}).get('processor_algae_points', 0)
+        net_algae = epa_data.get('breakdown', {}).get('net_algae_points', 0)
+        barge_points = epa_data.get('breakdown', {}).get('barge_points', 0)
+
     except Exception:
         overall_epa = 0
         epa_rank = 9999
         auto_epa = 0
         teleop_epa = 0
+        total_coral = 0
+        processor_algae = 0
+        net_algae = 0
+        barge_points = 0
 
     opinion_parts = []
 
+    # EPA strength
     if overall_epa > 95:
         opinion_parts.append("🚀 Top-tier team with elite scoring capability.")
     elif overall_epa > 85:
@@ -212,18 +227,33 @@ def generate_statbotics_opinion(statbotics_info):
     else:
         opinion_parts.append("🧪 Developmental team — may be finding their stride.")
 
+    # Top 20
     if epa_rank <= 20:
         opinion_parts.append("🔥 Ranked among the top 20 worldwide — elite company!")
 
+    # Auto strength
     if auto_epa > 20:
         opinion_parts.append("⚡ Excellent autonomous routine — fast starter!")
     elif auto_epa > 12:
         opinion_parts.append("⚙️ Solid and consistent auto.")
 
+    # Teleop strength
     if teleop_epa > 35:
         opinion_parts.append("🎯 High teleop scoring threat — dominates midgame.")
     elif teleop_epa > 20:
         opinion_parts.append("🏹 Good teleop contributor.")
+
+    # Coral Specialist
+    if total_coral > 50:
+        opinion_parts.append("🪸 Coral Specialist — dominates coral scoring!")
+
+    # Algae Master
+    if processor_algae > 5 or net_algae > 8:
+        opinion_parts.append("🧪 Algae Handling Expert!")
+
+    # Barge Dominator
+    if barge_points > 15:
+        opinion_parts.append("🛶 Barge Scoring Specialist!")
 
     return " ".join(opinion_parts)
 
