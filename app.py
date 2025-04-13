@@ -133,11 +133,19 @@ def team_lookup(user_input):
     reply = (
         f"🏷️ Team {team_number} - {nickname}\n"
         f"📍 Location: {city}, {state}, {country}\n\n"
-        f"{epa_summary}\n"
-        f"{last_event_stats}"
-        f"📝 Notes:\n{notes_text}\n\n"
-        f"🧠 Scout Opinion:\n{scout_opinion} {statbotics_opinion}\n\n"
-        f"📜 2025 Season Summary:\n{event_summary}"
+        
+        f"{epa_summary}\n\n"
+        
+        f"{last_event_stats}\n\n"
+        
+        f"📝 Notes:\n"
+        f"{notes_text}\n\n"
+        
+        f"🧠 Scout Opinion:\n"
+        f"{scout_opinion} {statbotics_opinion}\n\n"
+        
+        f"📜 2025 Season Summary:\n"
+        f"{event_summary}"
     )
 
     return jsonify({'reply': reply})
