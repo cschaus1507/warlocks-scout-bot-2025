@@ -36,8 +36,23 @@
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
         }
         .instructions {
+            position: relative;
             text-align: center;
             margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .instructions img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            opacity: 0.06;
+            pointer-events: none;
+        }
+        .instructions-content {
+            position: relative;
+            z-index: 1;
         }
         .chatbox {
             display: flex;
@@ -89,21 +104,23 @@
     </style>
 </head>
 <body>
-    <img src="/static/warlocks_logo.jpg" alt="Warlocks Logo" class="logo">
 
     <div class="container">
         <div class="instructions">
-            <h1>Welcome, Warlock! 🔮</h1>
-            <p>
-                Commands:<br>
-                <b>Scout a team</b>: 1507<br>
-                <b>Favorite a team</b>: favorite 1507<br>
-                <b>List favorites</b>: list favorites<br>
-                <b>Add a note</b>: note: 1507 Great scorer!<br>
-                <b>List notes</b>: list notes<br>
-                <b>Edit note</b>: edit note 1 for team 1507 -> Updated text<br>
-                <b>Delete note</b>: delete note 1 for team 1507
-            </p>
+            <img src="/static/warlocks_logo.jpg" alt="Watermark Logo">
+            <div class="instructions-content">
+                <h1>Welcome, Warlock! 🔮</h1>
+                <p>
+                    Commands:<br>
+                    <b>Scout a team</b>: 1507<br>
+                    <b>Favorite a team</b>: favorite 1507<br>
+                    <b>List favorites</b>: list favorites<br>
+                    <b>Add a note</b>: note: 1507 Great scorer!<br>
+                    <b>List notes</b>: list notes<br>
+                    <b>Edit note</b>: edit note 1 for team 1507 -> Updated text<br>
+                    <b>Delete note</b>: delete note 1 for team 1507
+                </p>
+            </div>
         </div>
 
         <div class="chatbox" id="chatbox">
