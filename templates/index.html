@@ -24,7 +24,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(10, 10, 35, 0.7); /* Dark overlay to soften logo */
+            background-color: rgba(10, 10, 35, 0.7); /* Dark overlay */
             z-index: 0;
         }
         .container {
@@ -93,11 +93,23 @@
             background-color: #333;
             color: white;
             font-size: 16px;
-            border-radius: 0 20px 20px 0;
             cursor: pointer;
         }
         button:hover {
             background-color: #555;
+        }
+        .clear-btn {
+            background-color: #880000;
+            border-radius: 0 20px 20px 0;
+            margin-left: 5px;
+        }
+        /* Fade-in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease;
         }
     </style>
 </head>
@@ -120,15 +132,14 @@
         </div>
 
         <div class="chatbox" id="chatbox">
-            <div class="bot-message">👋 Hello Warlock — how can I assist your scouting today?</div>
+            <div class="bot-message fade-in">👋 Hello Warlock — how can I assist your scouting today?</div>
         </div>
 
         <div class="input-container">
             <input type="text" id="user-input" placeholder="Type a command...">
             <button onclick="sendMessage()">Send</button>
-            <button onclick="clearChat()" style="background-color: #880000;">Clear</button>
+            <button onclick="clearChat()" class="clear-btn">Clear</button>
         </div>
-
     </div>
 
     <script>
@@ -140,41 +151,45 @@
             }
         });
 
-async function sendMessage() {
-    const message = inputField.value.trim();
-    if (!message) return;
+        async function sendMessage() {
+            const message = inputField.value.trim();
+            if (!message) return;
 
-    const chatbox = document.getElementById('chatbox');
+            const chatbox = document.getElementById('chatbox');
 
-    const userMsg = document.createElement('div');
-    userMsg.className = 'message user-message fade-in';
-    userMsg.innerText = message;
-    chatbox.appendChild(userMsg);
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user-message fade-in';
+            userMsg.innerText = message;
+            chatbox.appendChild(userMsg);
 
-    inputField.value = '';
+            inputField.value = '';
 
-    const botTyping = document.createElement('div');
-    botTyping.className = 'message bot-message fade-in';
-    botTyping.innerText = 'Scout Bot is typing...';
-    chatbox.appendChild(botTyping);
-    chatbox.scrollTop = chatbox.scrollHeight;
+            const botTyping = document.createElement('div');
+            botTyping.className = 'message bot-message fade-in';
+            botTyping.innerText = 'Scout Bot is typing...';
+            chatbox.appendChild(botTyping);
+            chatbox.scrollTop = chatbox.scrollHeight;
 
-    try {
-        const response = await fetch('/ask', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ team_number: message })
-        });
-        const data = await response.json();
-        botTyping.innerText = data.reply;
-        chatbox.scrollTop = chatbox.scrollHeight;
-    } catch (error) {
-        botTyping.innerText = '⚠️ Something went wrong. Please try again.';
-    }
-}
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ team_number: message })
+                });
+                const data = await response.json();
+                botTyping.innerText = data.reply;
+                chatbox.scrollTop = chatbox.scrollHeight;
+            } catch (error) {
+                botTyping.innerText = '⚠️ Something went wrong. Please try again.';
+            }
+        }
 
+        function clearChat() {
+            const chatbox = document.getElementById('chatbox');
+            chatbox.innerHTML = '<div class="bot-message fade-in">👋 Hello Warlock — how can I assist your scouting today?</div>';
+        }
     </script>
 </body>
 </html>
