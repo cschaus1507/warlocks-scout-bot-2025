@@ -118,8 +118,8 @@ def team_lookup(user_input):
     else:
         epa_summary = "📊 EPA Data not available."
 
-    # --- Specialty Scoring from Latest Event
-    specialty_summary = generate_specialty_from_latest_event(team_number)
+    # Fetch Last Event Statistics (NEW)
+    last_event_stats = generate_last_event_statistics(team_number)
 
     # --- Load notes
     notes = load_team_notes()
@@ -134,7 +134,7 @@ def team_lookup(user_input):
         f"🏷️ Team {team_number} - {nickname}\n"
         f"📍 Location: {city}, {state}, {country}\n\n"
         f"{epa_summary}\n"
-        f"{specialty_summary}\n\n"
+        f"{last_event_stats}"
         f"📝 Notes:\n{notes_text}\n\n"
         f"🧠 Scout Opinion:\n{scout_opinion} {statbotics_opinion}\n\n"
         f"📜 2025 Season Summary:\n{event_summary}"
@@ -269,7 +269,7 @@ def generate_statbotics_opinion(statbotics_info):
 
     return " ".join(opinion_parts)
     
-def generate_specialty_from_latest_event(team_number):
+def generate_last_event_statistics(team_number):
     try:
         headers = {
             "X-TBA-Auth-Key": TBA_AUTH_KEY
@@ -282,13 +282,14 @@ def generate_specialty_from_latest_event(team_number):
         events = events_response.json()
 
         if not events:
-            return "⭐ Specialty Scoring data not available."
+            return "⭐ Last Event Statistics data not available."
 
+        # Find latest event
         latest_event = sorted(events, key=lambda e: e.get('end_date', ''))[-1]
         event_key = latest_event.get('key')
 
         if not event_key:
-            return "⭐ Specialty Scoring data not available."
+            return "⭐ Last Event Statistics data not available."
 
         # Step 2: Pull matches
         matches_url = f"{TBA_API_BASE}/event/{event_key}/matches"
@@ -297,13 +298,13 @@ def generate_specialty_from_latest_event(team_number):
         matches = matches_response.json()
 
         if not matches:
-            return "⭐ Specialty Scoring data not available."
+            return "⭐ Last Event Statistics data not available."
 
-        auto_coral_total = 0
-        teleop_coral_total = 0
-        algae_total = 0
-        endgame_barge_total = 0
-        climb_levels = []
+        # Initialize totals
+        total_auto_coral = 0
+        total_teleop_coral = 0
+        total_algae_processor = 0
+        total_barge_algae = 0
         match_count = 0
 
         for match in matches:
@@ -324,50 +325,34 @@ def generate_specialty_from_latest_event(team_number):
             if not found_team or not breakdown:
                 continue
 
-            auto_coral_total += breakdown.get('autoCoralPoints', 0)
-            teleop_coral_total += breakdown.get('teleopCoralPoints', 0)
-            algae_total += breakdown.get('algaePoints', 0)
-            endgame_barge_total += breakdown.get('endGameBargePoints', 0)
-
-            # Endgame climb detection
-            for robot in ['endGameRobot1', 'endGameRobot2', 'endGameRobot3']:
-                status = breakdown.get(robot, '')
-                if status in ['OnStage', 'HarmonyStage']:
-                    climb_levels.append(status)
+            total_auto_coral += breakdown.get('autoCoralPoints', 0)
+            total_teleop_coral += breakdown.get('teleopCoralPoints', 0)
+            total_algae_processor += breakdown.get('algaePoints', 0)
+            total_barge_algae += breakdown.get('endGameBargePoints', 0)
 
             match_count += 1
 
         if match_count == 0:
-            return "⭐ Specialty Scoring data not available."
+            return "⭐ Last Event Statistics data not available."
 
-        avg_total_coral = (auto_coral_total + teleop_coral_total) / match_count
-        avg_algae = algae_total / match_count
-        avg_barge = endgame_barge_total / match_count
-        climb_success_rate = climb_levels.count('OnStage') + climb_levels.count('HarmonyStage')
+        # Calculate averages
+        avg_coral = (total_auto_coral + total_teleop_coral) / match_count
+        avg_processor_algae = total_algae_processor / match_count
+        avg_barge_algae = total_barge_algae / match_count
 
-        specialties = []
+        # Format the output nicely
+        stats_report = (
+            f"📊 Last Event Statistics:\n"
+            f"• Average Coral Points: {avg_coral:.1f}\n"
+            f"• Average Processor Algae Points: {avg_processor_algae:.1f}\n"
+            f"• Average Barge Algae Points: {avg_barge_algae:.1f}\n"
+        )
 
-        if avg_total_coral > 30:
-            specialties.append("🪸 Coral Specialist")
-
-        if avg_algae > 5:
-            specialties.append("🧪 Algae Expert")
-
-        if avg_barge > 10:
-            specialties.append("🛶 Barge Bonus Master")
-
-        if climb_success_rate >= (match_count * 2):  # Assuming multiple robots climb per match
-            specialties.append("🧗 High Climb Reliability")
-        elif climb_success_rate >= match_count:
-            specialties.append("🪜 Moderate Climb Capability")
-        else:
-            specialties.append("🚶 Climb Needs Improvement")
-
-        return "⭐ Specialty Scoring:\n" + " ".join(specialties)
+        return stats_report
 
     except Exception as e:
-        print(f"Error generating specialty from event: {e}")
-        return "⭐ Specialty Scoring data not available."
+        print(f"Error generating last event stats: {e}")
+        return "⭐ Last Event Statistics data not available."
 
 # --- Favorites Management ---
 
