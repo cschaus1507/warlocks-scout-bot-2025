@@ -321,25 +321,28 @@ def generate_last_event_statistics(team_number):
             alliances = match.get('alliances', {})
             blue = alliances.get('blue', {})
             red = alliances.get('red', {})
+            score_breakdown = match.get('score_breakdown', {})
 
-            alliance = None
+            if not score_breakdown:
+                continue  # Skip matches with no breakdown
+
             if team_key in blue.get('team_keys', []):
-                alliance = blue
+                breakdown = score_breakdown.get('blue', {})
             elif team_key in red.get('team_keys', []):
-                alliance = red
+                breakdown = score_breakdown.get('red', {})
             else:
-                continue  # team not in this match
+                continue  # Team didn't play in this match
 
-            breakdown = alliance.get('score_breakdown', {})
             if not breakdown:
-                continue  # no score data
+                continue  # No breakdown for alliance
 
+            # Add up scoring fields
             total_auto_coral += breakdown.get('autoCoralCount', 0)
             total_teleop_coral += breakdown.get('teleopCoralCount', 0)
             total_processor_algae += breakdown.get('wallAlgaeCount', 0)
             total_barge_algae += breakdown.get('netAlgaeCount', 0)
 
-            # Track climb statuses
+            # Track endgame results
             for robot_key in ['endGameRobot1', 'endGameRobot2', 'endGameRobot3']:
                 climb_result = breakdown.get(robot_key, "")
                 if climb_result == "OnStage":
