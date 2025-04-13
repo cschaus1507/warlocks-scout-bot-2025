@@ -134,7 +134,7 @@ def team_lookup(user_input):
         f"🏷️ Team {team_number} - {nickname}\n"
         f"📍 Location: {city}, {state}, {country}\n\n"
         
-        f"{epa_summary}\n\n"
+        f"{epa_summary}\n"
         
         f"{last_event_stats}\n\n"
         
@@ -283,21 +283,18 @@ def generate_last_event_statistics(team_number):
             "X-TBA-Auth-Key": TBA_AUTH_KEY
         }
 
-        # Step 1: Pull events
+        # Step 1: Pull latest event
         events_url = f"{TBA_API_BASE}/team/frc{team_number}/events/2025/simple"
         events_response = requests.get(events_url, headers=headers)
         events_response.raise_for_status()
         events = events_response.json()
 
         if not events:
-            return "⭐ Last Event Statistics data not available."
+            return "⭐ No event data available."
 
-        # Find latest event
         latest_event = sorted(events, key=lambda e: e.get('end_date', ''))[-1]
         event_key = latest_event.get('key')
-
-        if not event_key:
-            return "⭐ Last Event Statistics data not available."
+        event_name = latest_event.get('name', 'Unknown Event')
 
         # Step 2: Pull matches
         matches_url = f"{TBA_API_BASE}/event/{event_key}/matches"
@@ -306,61 +303,87 @@ def generate_last_event_statistics(team_number):
         matches = matches_response.json()
 
         if not matches:
-            return "⭐ Last Event Statistics data not available."
+            return "⭐ No match data available."
 
-        # Initialize totals
+        # Step 3: Initialize totals
         total_auto_coral = 0
         total_teleop_coral = 0
-        total_algae_processor = 0
+        total_processor_algae = 0
         total_barge_algae = 0
-        match_count = 0
+        total_park = 0
+        total_deep_climb = 0
+        total_shallow_climb = 0
+        matches_played = 0
 
         for match in matches:
             alliances = match.get('alliances', {})
             blue = alliances.get('blue', {})
             red = alliances.get('red', {})
 
-            found_team = False
-            breakdown = {}
+            breakdown = None
 
             if f"frc{team_number}" in blue.get('team_keys', []):
                 breakdown = blue.get('score_breakdown', {})
-                found_team = True
             elif f"frc{team_number}" in red.get('team_keys', []):
                 breakdown = red.get('score_breakdown', {})
-                found_team = True
+            else:
+                continue
 
-            if not found_team or not breakdown:
+            if not breakdown:
                 continue
 
             total_auto_coral += breakdown.get('autoCoralPoints', 0)
             total_teleop_coral += breakdown.get('teleopCoralPoints', 0)
-            total_algae_processor += breakdown.get('algaePoints', 0)
+            total_processor_algae += breakdown.get('algaePoints', 0)
             total_barge_algae += breakdown.get('endGameBargePoints', 0)
 
-            match_count += 1
+            # Endgame climb tracking for 2025 Reefscape
+            for robot_key in ['endGameRobot1', 'endGameRobot2', 'endGameRobot3']:
+                climb_result = breakdown.get(robot_key, "")
+                if climb_result == "OnStage":
+                    total_deep_climb += 1
+                elif climb_result == "HarmonyStage":
+                    total_shallow_climb += 1
+                elif climb_result == "Park":
+                    total_park += 1
+                # Ignore "FailedAttempt" and "None"
 
-        if match_count == 0:
-            return "⭐ Last Event Statistics data not available."
+            matches_played += 1
 
-        # Calculate averages
-        avg_coral = (total_auto_coral + total_teleop_coral) / match_count
-        avg_processor_algae = total_algae_processor / match_count
-        avg_barge_algae = total_barge_algae / match_count
+        if matches_played == 0:
+            return "⭐ No valid match data available."
 
-        # Format the output nicely
+        # Step 4: Calculate averages
+        avg_auto_coral = total_auto_coral / matches_played
+        avg_teleop_coral = total_teleop_coral / matches_played
+        avg_processor_algae = total_processor_algae / matches_played
+        avg_barge_algae = total_barge_algae / matches_played
+
+        avg_park = total_park / matches_played
+        avg_deep_climb = total_deep_climb / matches_played
+        avg_shallow_climb = total_shallow_climb / matches_played
+
+        # Step 5: Format the output
         stats_report = (
+            f"🏟️ Event: {event_name}\n"
+            f"(based on {matches_played} matches)\n\n"
             f"📊 Last Event Statistics:\n"
-            f"• Average Coral Points: {avg_coral:.1f}\n"
+            f"• Average Auto Coral Points: {avg_auto_coral:.1f}\n"
+            f"• Average Teleop Coral Points: {avg_teleop_coral:.1f}\n"
             f"• Average Processor Algae Points: {avg_processor_algae:.1f}\n"
-            f"• Average Barge Algae Points: {avg_barge_algae:.1f}\n"
+            f"• Average Barge Algae Points: {avg_barge_algae:.1f}\n\n"
+            f"🏁 Endgame Tendencies per Match:\n"
+            f"• Parked: {avg_park:.1f}\n"
+            f"• Deep Cage Climb (OnStage): {avg_deep_climb:.1f}\n"
+            f"• Shallow Cage Climb (HarmonyStage): {avg_shallow_climb:.1f}\n"
         )
 
         return stats_report
 
     except Exception as e:
-        print(f"Error generating last event stats: {e}")
-        return "⭐ Last Event Statistics data not available."
+        print(f"💥 Error generating last event statistics: {e}")
+        return "⭐ Last Event Statistics not available."
+
 
 # --- Favorites Management ---
 
