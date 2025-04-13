@@ -141,7 +141,7 @@ def team_lookup(user_input):
         
         f"{epa_summary}\n"
 
-        f"📝 Notes:\n"
+        f"📝 Human Scout Notes:\n"
         f"{notes_text}\n\n"
         
         f"{last_event_stats}\n\n"
