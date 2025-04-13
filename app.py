@@ -313,7 +313,9 @@ def list_favorites():
     else:
         return jsonify({'reply': "You have no favorite teams yet."})
 
-# --- Notes Management ---
+from datetime import datetime
+
+# --- Upgraded Notes Management ---
 
 def load_team_notes():
     if not os.path.exists(NOTES_FILE):
@@ -326,26 +328,38 @@ def save_team_notes(notes):
     with open(NOTES_FILE, 'w') as f:
         json.dump(notes, f, indent=2)
 
-def add_note_to_team(team_number, note):
+def add_note_to_team(team_number, note_text):
     notes = load_team_notes()
     team_key = str(team_number)
+    timestamp = datetime.now().strftime("%Y-%m-%d")
     if team_key not in notes:
         notes[team_key] = []
-    notes[team_key].append(note)
+    notes[team_key].append({"text": note_text, "timestamp": timestamp})
     save_team_notes(notes)
+
+def generate_notes_display(team_number):
+    notes = load_team_notes()
+    team_key = str(team_number)
+    if team_key not in notes or not notes[team_key]:
+        return "No custom notes yet."
+
+    output = []
+    for idx, note in enumerate(notes[team_key], 1):
+        output.append(f"{idx}. {note['text']} (added {note['timestamp']})")
+    return "\n".join(output)
 
 def add_note(user_input):
     try:
         split_parts = user_input.split("note:")
         team_part = split_parts[0].strip()
-        note_part = split_parts[1].strip()
+        note_text = split_parts[1].strip()
 
         team_number = extract_team_number(team_part)
         if not team_number:
             return jsonify({'reply': "I couldn't figure out which team you're noting."})
 
-        add_note_to_team(team_number, note_part)
-        return jsonify({'reply': f"📝 Saved your note for Team {team_number}."})
+        add_note_to_team(team_number, note_text)
+        return jsonify({'reply': f"📝 Note added for Team {team_number}!"})
     except Exception:
         return jsonify({'reply': "Something went wrong while saving your note."})
 
@@ -353,51 +367,57 @@ def list_notes():
     notes = load_team_notes()
     if not notes:
         return jsonify({'reply': "There are no saved notes yet."})
-    team_list = ', '.join(sorted(notes.keys()))
-    return jsonify({'reply': f"Teams with saved notes: {team_list}"})
+    output = []
+    for team_key in sorted(notes.keys()):
+        output.append(f"Team {team_key} has {len(notes[team_key])} notes.")
+    return jsonify({'reply': "\n".join(output)})
 
 def delete_note(user_input):
     try:
-        split_parts = user_input.split("delete:")
-        team_part = split_parts[0].strip()
-        note_part = split_parts[1].strip()
+        split_parts = user_input.split("delete note")
+        team_part = split_parts[1].strip()
+        parts = team_part.split()
+        note_index = int(parts[0]) - 1
+        team_number = extract_team_number(" ".join(parts[2:]))
 
-        team_number = extract_team_number(team_part)
         notes = load_team_notes()
         team_key = str(team_number)
 
-        if team_key in notes and note_part in notes[team_key]:
-            notes[team_key].remove(note_part)
+        if team_key in notes and 0 <= note_index < len(notes[team_key]):
+            deleted_note = notes[team_key].pop(note_index)
             if not notes[team_key]:
                 del notes[team_key]
             save_team_notes(notes)
-            return jsonify({'reply': f"Deleted the note for Team {team_number}."})
+            return jsonify({'reply': f"🗑️ Deleted note: \"{deleted_note['text']}\" for Team {team_number}."})
         else:
-            return jsonify({'reply': f"I couldn't find that note for Team {team_number}."})
+            return jsonify({'reply': "Couldn't find that note to delete."})
     except Exception:
         return jsonify({'reply': "Something went wrong while deleting the note."})
 
 def edit_note(user_input):
     try:
-        split_parts = user_input.split("edit:")
-        team_part = split_parts[0].strip()
-        edit_parts = split_parts[1].split("->")
-        old_note = edit_parts[0].strip()
-        new_note = edit_parts[1].strip()
+        split_parts = user_input.split("edit note")
+        team_part = split_parts[1].strip()
+        parts = team_part.split("->")
+        left = parts[0].strip().split()
+        note_index = int(left[0]) - 1
+        team_number = extract_team_number(" ".join(left[2:]))
 
-        team_number = extract_team_number(team_part)
+        new_text = parts[1].strip()
+
         notes = load_team_notes()
         team_key = str(team_number)
 
-        if team_key in notes and old_note in notes[team_key]:
-            notes[team_key].remove(old_note)
-            notes[team_key].append(new_note)
+        if team_key in notes and 0 <= note_index < len(notes[team_key]):
+            notes[team_key][note_index]["text"] = new_text
+            notes[team_key][note_index]["timestamp"] = datetime.now().strftime("%Y-%m-%d")
             save_team_notes(notes)
-            return jsonify({'reply': f"Updated the note for Team {team_number}."})
+            return jsonify({'reply': f"✏️ Edited note for Team {team_number}."})
         else:
-            return jsonify({'reply': f"I couldn't find that original note for Team {team_number}."})
+            return jsonify({'reply': "Couldn't find that note to edit."})
     except Exception:
         return jsonify({'reply': "Something went wrong while editing the note."})
+
 
 
 if __name__ == '__main__':
