@@ -29,17 +29,12 @@ def ask():
         if not user_input:
             return jsonify({'reply': "Please provide a team number or a note!"})
 
+        # --- IMPORTANT: Check more specific commands first ---
         if "compare" in user_input.lower():
             return compare_teams(user_input)
 
         if "search notes" in user_input.lower():
             return search_notes(user_input)
-
-        if "favorite" in user_input.lower() and "unfavorite" not in user_input.lower():
-            return favorite_team(user_input)
-
-        if "unfavorite" in user_input.lower():
-            return unfavorite_team(user_input)
 
         if "list favorites" in user_input.lower():
             return list_favorites()
@@ -47,8 +42,11 @@ def ask():
         if "list notes" in user_input.lower():
             return list_notes()
 
-        if "note" in user_input.lower():
-            return add_note(user_input)
+        if "unfavorite" in user_input.lower():
+            return unfavorite_team(user_input)
+
+        if "favorite" in user_input.lower():
+            return favorite_team(user_input)
 
         if "delete note" in user_input.lower():
             return delete_note(user_input)
@@ -56,6 +54,10 @@ def ask():
         if "edit note" in user_input.lower():
             return edit_note(user_input)
 
+        if "note" in user_input.lower():
+            return add_note(user_input)
+
+        # Default: treat input as team lookup
         return team_lookup(user_input)
 
     except Exception as e:
