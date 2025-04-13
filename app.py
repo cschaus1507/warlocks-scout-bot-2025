@@ -385,6 +385,7 @@ def generate_last_event_statistics(team_number):
             f"• Parked: {avg_park:.1f}\n"
             f"• Deep Cage Climb (OnStage): {avg_deep_climb:.1f}\n"
             f"• Shallow Cage Climb (HarmonyStage): {avg_shallow_climb:.1f}\n"
+            f"⚠️ Note: Statistics reflect total alliance performance, not individual team contribution."
         )
 
         return stats_report
