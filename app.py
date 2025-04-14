@@ -30,32 +30,29 @@ def ask():
             return jsonify({'reply': "Please provide a team number or a note!"})
 
         # --- IMPORTANT: Check more specific commands first ---
-        if "compare" in user_input.lower():
+        command_type = parse_command(user_input)
+
+        if command_type == 'compare':
             return compare_teams(user_input)
-
-        if "search notes" in user_input.lower():
+        elif command_type == 'search_notes':
             return search_notes(user_input)
-
-        if "list favorites" in user_input.lower():
+        elif command_type == 'list_favorites':
             return list_favorites()
-
-        if "list notes" in user_input.lower():
+        elif command_type == 'list_notes':
             return list_notes()
-
-        if "unfavorite" in user_input.lower():
+        elif command_type == 'unfavorite':
             return unfavorite_team(user_input)
-
-        if "favorite" in user_input.lower():
+        elif command_type == 'favorite':
             return favorite_team(user_input)
-
-        if "delete note" in user_input.lower():
+        elif command_type == 'delete_note':
             return delete_note(user_input)
-
-        if "edit note" in user_input.lower():
+        elif command_type == 'edit_note':
             return edit_note(user_input)
-
-        if "note" in user_input.lower():
+        elif command_type == 'note':
             return add_note(user_input)
+        else:
+            # Default fallback: treat input as team lookup
+            return team_lookup(user_input)
 
         # Default: treat input as team lookup
         return team_lookup(user_input)
@@ -63,6 +60,35 @@ def ask():
     except Exception as e:
         traceback.print_exc()
         return jsonify({'reply': "⚠️ Sorry, something unexpected happened while scouting. Please try again."})
+
+# --- Make input variances forgiving ---
+def parse_command(user_input):
+    """
+    Parses user input to determine command type and content, forgivingly.
+    """
+    clean_input = user_input.strip()
+    lowered_input = clean_input.lower().replace(' ', '')
+
+    if lowered_input.startswith('note:') or lowered_input.startswith('note'):
+        return 'note'
+    elif lowered_input.startswith('favorite') or lowered_input.startswith('fav'):
+        return 'favorite'
+    elif lowered_input.startswith('listfavorites') or lowered_input.startswith('favorites'):
+        return 'list_favorites'
+    elif lowered_input.startswith('listnotes') or lowered_input.startswith('notes'):
+        return 'list_notes'
+    elif lowered_input.startswith('editnote') or lowered_input.startswith('edit'):
+        return 'edit_note'
+    elif lowered_input.startswith('deletenote') or lowered_input.startswith('delete'):
+        return 'delete_note'
+    elif lowered_input.startswith('searchnotes') or lowered_input.startswith('search'):
+        return 'search_notes'
+    elif lowered_input.startswith('compare'):
+        return 'compare'
+    elif lowered_input.startswith('unfavorite'):
+        return 'unfavorite'
+    else:
+        return 'team_lookup'
 
 # --- Team Lookup and Integrations ---
 
