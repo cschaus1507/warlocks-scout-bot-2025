@@ -493,10 +493,12 @@ def add_note_to_team(team_number, note_text):
 
 def add_note(user_input):
     try:
-        if "note:" in user_input.lower():
-            split_parts = user_input.split("note:")
-        elif "note" in user_input.lower():
-            split_parts = user_input.split("note")
+        lowered_input = user_input.lower()
+
+        if "note:" in lowered_input:
+            split_parts = lowered_input.split("note:")
+        elif "note" in lowered_input:
+            split_parts = lowered_input.split("note")
         else:
             return jsonify({'reply': "⚠️ Please type 'note:' followed by team number and your note."})
 
@@ -516,6 +518,7 @@ def add_note(user_input):
         return jsonify({'reply': f"📝 Note added for Team {team_number}!"})
     except Exception:
         return jsonify({'reply': "⚠️ Something went wrong while saving your note."})
+
 
 def generate_notes_display(team_number):
     notes = load_team_notes()
